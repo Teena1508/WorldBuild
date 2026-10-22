@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WORLDBUILD: Celestial Fantasy Worldbuilding & Continuity Engine
 
-## Getting Started
+WORLDBUILD is a full-stack fictional-universe continuity management application combining cinematic dark academia aesthetics with a PostgreSQL causal validation engine.
 
-First, run the development server:
+---
+
+## Architecture & Technology Stack
+
+- **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
+- **Styling**: TailwindCSS v4 with custom Celestial Dark Academia design system, Cinzel / Cormorant Garamond typography, and reduced-motion compliance.
+- **Database**: PostgreSQL
+  - Embedded local development & testing via `@electric-sql/pglite` (persisting to `.data/postgres` with full SQL constraints and transactions).
+  - Production remote PostgreSQL via `pg.Pool` (triggered whenever `DATABASE_URL` is configured).
+- **Validation Engine**: Pure database-backed Continuity Oracle executing five deterministic causality rules.
+
+---
+
+## Environment Variables
+
+Copy `.env.example` to `.env`:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| `DATABASE_URL` | PostgreSQL connection string (`postgres://...`). If left blank, WORLDBUILD uses the embedded local PostgreSQL engine. | _(empty - uses embedded PGlite)_ |
+| `DATABASE_SSL` | Enable SSL for remote PostgreSQL hosts | `false` |
+| `PG_IN_MEMORY` | Run ephemeral in-memory PostgreSQL (ideal for isolated testing) | `false` |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Database Migrations & Structure
 
-## Learn More
+SQL DDL migrations reside in [001_initial_schema.sql](src/lib/db/migrations/001_initial_schema.sql).
 
-To learn more about Next.js, take a look at the following resources:
+Tables:
+- `app_users`: User identities and archivist sessions
+- `universes`: Fictional continuums and world metadata
+- `characters`: Inhabitants, life spans, death confirmations & exceptions
+- `locations`: Realms, astral planes, coordinates
+- `chapters`: Narrative sequencing
+- `events`: Chronology milestones, locations, death flags
+- `event_participants`: Character participation in events
+- `event_dependencies`: Causal and prerequisite event DAG edges
+- `relationships`: Directed character ties with intensity scoring
+- `secrets`: Lore revelations and classifications
+- `character_secrets`: Epistemic state (when characters learn secrets)
+- `secret_events`: Events where secrets are revealed or deployed
+- `continuity_findings`: Deterministic paradox detections with fingerprints
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Available Scripts
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `npm run dev`: Launch local development server on port 3000
+- `npm test`: Run automated tests (`tsx --test tests/**/*.test.ts`)
+- `npm run lint`: Run ESLint verification
+- `npm run build`: Build production Next.js application

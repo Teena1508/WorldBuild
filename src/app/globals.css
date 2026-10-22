@@ -1,26 +1,195 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --void: #030408;
+    --midnight: #070914;
+    --night-indigo: #0d1226;
+    --astral-slate: #151b33;
+    --gold-primary: #d4af37;
+    --gold-bright: #fae48f;
+    --gold-dim: #947a24;
+    --gold-muted: rgba(212, 175, 55, 0.18);
+    --lavender-muted: #8b8da8;
+    --lavender-glow: #cfd0f5;
+    --parchment: #e9e4d6;
+    --parchment-dim: #b3ad9e;
+  }
+
+  body {
+    background-color: #040509;
+    color: #dfdcd2;
+    font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Custom scrollbar matching dark celestial aesthetic */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #05060b;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1c223a;
+    border-radius: 3px;
+    border: 1px solid rgba(212, 175, 55, 0.15);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2b355a;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom Typography Helpers */
+.font-cinzel {
+  font-family: var(--font-cinzel), "Cinzel", Georgia, serif;
+}
+.font-cormorant {
+  font-family: var(--font-cormorant), "Cormorant Garamond", Garamond, Georgia, serif;
+}
+.font-sans {
+  font-family: var(--font-sans), sans-serif;
+}
+.font-mono {
+  font-family: var(--font-mono), monospace;
+}
+
+/* Celestial Glass & Border Utilities */
+.celestial-card {
+  background: radial-gradient(120% 120% at 50% 0%, rgba(20, 26, 51, 0.55) 0%, rgba(7, 9, 18, 0.75) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.18);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.7), 0 0 20px -5px rgba(212, 175, 55, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.celestial-card:hover {
+  border-color: rgba(212, 175, 55, 0.38);
+  box-shadow: 0 15px 45px -10px rgba(0, 0, 0, 0.8), 0 0 30px -5px rgba(212, 175, 55, 0.12);
+}
+
+.celestial-glass {
+  background: rgba(8, 11, 23, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(212, 175, 55, 0.14);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #fff7d6 0%, #fae48f 35%, #d4af37 70%, #997b20 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.celestial-gradient-text {
+  background: linear-gradient(135deg, #ffffff 0%, #ece5d8 40%, #c4c1e0 75%, #fae48f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.lavender-gradient-text {
+  background: linear-gradient(135deg, #f0effc 0%, #c8c9eb 50%, #898cb0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Astrolabe and Celestial Geometry Animations */
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinReverseSlow {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes cosmicPulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes starTwinkle {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 140s linear infinite;
+}
+
+.animate-spin-reverse-slow {
+  animation: spinReverseSlow 100s linear infinite;
+}
+
+.animate-float {
+  animation: floatGentle 6s ease-in-out infinite;
+}
+
+.animate-cosmic-pulse {
+  animation: cosmicPulse 8s ease-in-out infinite;
+}
+
+/* Subtle parchment and celestial grid background */
+.celestial-grid {
+  background-size: 64px 64px;
+  background-image: 
+    linear-gradient(to right, rgba(212, 175, 55, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(212, 175, 55, 0.035) 1px, transparent 1px);
+}
+
+.radial-nebula {
+  background: radial-gradient(circle at 50% 30%, rgba(35, 45, 95, 0.28) 0%, rgba(13, 17, 36, 0.18) 45%, transparent 75%);
+}
+
+.gold-glow-button {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.16) 0%, rgba(15, 20, 38, 0.8) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  box-shadow: 0 0 18px rgba(212, 175, 55, 0.15), inset 0 0 12px rgba(212, 175, 55, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gold-glow-button:hover {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.28) 0%, rgba(25, 34, 65, 0.9) 100%);
+  border-color: rgba(250, 228, 143, 0.7);
+  box-shadow: 0 0 28px rgba(212, 175, 55, 0.3), inset 0 0 16px rgba(212, 175, 55, 0.15);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

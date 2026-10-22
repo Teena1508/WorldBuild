@@ -1,0 +1,328 @@
+import {
+  UniverseEntity,
+  TimelineEpoch,
+  ContinuityContradiction,
+  AtlasRegion,
+  UniverseOverview,
+} from "@/types/worldbuild";
+
+export const SAMPLE_UNIVERSE_OVERVIEW: UniverseOverview = {
+  id: "univ-aethelgard",
+  title: "Aethelgard: The Astral Shards",
+  tagline: "A fractured celestial sphere held together by ancient golden leylines and dying starfire.",
+  creatorName: "High Scribe & The Silent Synod",
+  lastSynchronized: "Cycle 418 of the Glass Moon",
+  stats: {
+    totalEntities: 1482,
+    activeTimelines: 4,
+    mappedRegions: 68,
+    causalIntegrity: 98.7,
+    unresolvedParadoxes: 3,
+  },
+};
+
+export const SAMPLE_ENTITIES: UniverseEntity[] = [
+  {
+    id: "char-vaelen",
+    name: "Grand Archivist Vaelen",
+    type: "character",
+    title: "Keeper of the Obsidian Needle",
+    epoch: "The Second Astral Dawn (300-380 A.E.)",
+    realm: "Celestial Firmament",
+    summary: "High Scribe who mapped the shattered constellations and secretly bound his own soul to the Astrolabe of Severed Timelines.",
+    description: "Vaelen was the first mortal to discern that time in Aethelgard did not flow in a river, but refracted like light through fractured crystal. Discovered the first recorded paradox in the Starlight Codex.",
+    status: "canonical",
+    secretsCount: 4,
+    tags: ["High Scribe", "Causality Weaver", "Obsidian Order"],
+    attributes: {
+      "Lifespan": "194 Cycles (Extended via Chrono-leylines)",
+      "Affiliation": "Order of Starlight Cartographers",
+      "Signature Relic": "The Quill of Astral Dust",
+    },
+    connections: [
+      {
+        targetId: "loc-astris",
+        targetName: "The Sunken Citadel of Astris",
+        relationship: "Preserved the lower archives before the flood",
+        type: "location",
+      },
+      {
+        targetId: "art-astrolabe",
+        targetName: "Astrolabe of Severed Timelines",
+        relationship: "Bound his life essence to calibrate the rings",
+        type: "artifact",
+      },
+      {
+        targetId: "evt-shattering",
+        targetName: "The Shattering of the Silver Eclipse",
+        relationship: "Witnessed and cataloged the tear in causality",
+        type: "event",
+      },
+    ],
+  },
+  {
+    id: "loc-astris",
+    name: "The Sunken Citadel of Astris",
+    type: "location",
+    title: "Cradle of the Silver Dynasties",
+    epoch: "Primeval Alignment through Modern Shattering",
+    realm: "Abyssal Nether / Submerged Firmament",
+    summary: "A monumental city of luminescent limestone and brass astrolabes, now resting four thousand cubits beneath the Mare Tenebrosum.",
+    description: "Though drowned beneath heavy celestial waters, the air within its vaulted glass cloisters remains breathable. The tides are governed not by gravity, but by the dormant heart of the Titan Caelum.",
+    status: "canonical",
+    secretsCount: 7,
+    tags: ["Submerged", "Ancient Archive", "Sacred Geometry"],
+    attributes: {
+      "Depth": "4,200 fathoms into the Void Sea",
+      "Governing Principle": "Hydro-pneumatic Aetherics",
+      "Inhabitants": "The Gilded Drowned & Sleepless Scholars",
+    },
+    connections: [
+      {
+        targetId: "char-vaelen",
+        targetName: "Grand Archivist Vaelen",
+        relationship: "Home of his secret subterranean scriptorium",
+        type: "character",
+      },
+      {
+        targetId: "evt-shattering",
+        targetName: "The Shattering of the Silver Eclipse",
+        relationship: "Site where the sea ceiling collapsed",
+        type: "event",
+      },
+      {
+        targetId: "fac-cartographers",
+        targetName: "Order of Starlight Cartographers",
+        relationship: "Founding chapterhouse and holy observatory",
+        type: "faction",
+      },
+    ],
+  },
+  {
+    id: "evt-shattering",
+    name: "The Shattering of the Silver Eclipse",
+    type: "event",
+    title: "The Cataclysm of Year 342 A.E.",
+    epoch: "Year 342 of the Astral Reckoning",
+    realm: "Across All Seven Concentric Spheres",
+    summary: "When the Twin Moons overlapped out of astronomical sequence, the planetary mantle split into drifting island shards.",
+    description: "Occurring simultaneously at dawn and midnight across different provinces, this event broke linear time in the northern hemisphere. It is the root cause of 92% of the world's active timeline contradictions.",
+    status: "canonical",
+    secretsCount: 5,
+    tags: ["World Event", "Temporal Rupture", "Moonfall"],
+    attributes: {
+      "Duration": "3 days and 3 subjective centuries",
+      "Casualties": "Unknown; 30,000 citizens shifted to parallel eras",
+      "Causal Fallout": "Severed the northern leylines",
+    },
+    connections: [
+      {
+        targetId: "char-vaelen",
+        targetName: "Grand Archivist Vaelen",
+        relationship: "Archived the cataclysm in obsidian plates",
+        type: "character",
+      },
+      {
+        targetId: "loc-astris",
+        targetName: "The Sunken Citadel of Astris",
+        relationship: "Submerged during the primary tectonic shockwave",
+        type: "location",
+      },
+      {
+        targetId: "art-astrolabe",
+        targetName: "Astrolabe of Severed Timelines",
+        relationship: "Created from the meteor heart that triggered the eclipse",
+        type: "artifact",
+      },
+    ],
+  },
+  {
+    id: "art-astrolabe",
+    name: "Astrolabe of Severed Timelines",
+    type: "artifact",
+    title: "The Chrono-Armillary of Astris",
+    epoch: "Forged in Year 345 A.E.",
+    realm: "Sanctum of the Silver Needle",
+    summary: "A seven-ringed celestial sphere forged of cold meteoric iron and starlight ether, capable of resolving divergent narrative truths.",
+    description: "When the outer ring is turned three degrees counter-sunwise, the viewer sees events not as they occurred, but as they were destined to occur before the Shattering.",
+    status: "canonical",
+    secretsCount: 9,
+    tags: ["Cosmic Relic", "Time Manipulation", "Meteoric Iron"],
+    attributes: {
+      "Material": "Meteoric Iridium & Starlight Quartz",
+      "Danger Level": "Omega (Causes spontaneous memory drift)",
+      "Current Keeper": "Grand Archivist Vaelen",
+    },
+    connections: [
+      {
+        targetId: "char-vaelen",
+        targetName: "Grand Archivist Vaelen",
+        relationship: "Tuned and calibrated by Vaelen's bloodline",
+        type: "character",
+      },
+      {
+        targetId: "evt-shattering",
+        targetName: "The Shattering of the Silver Eclipse",
+        relationship: "Constructed to measure the rupture",
+        type: "event",
+      },
+      {
+        targetId: "fac-cartographers",
+        targetName: "Order of Starlight Cartographers",
+        relationship: "Venerated as the supreme sacred instrument",
+        type: "faction",
+      },
+    ],
+  },
+  {
+    id: "fac-cartographers",
+    name: "Order of Starlight Cartographers",
+    type: "faction",
+    title: "Custodians of the Celestial Geometry",
+    epoch: "First Astral Dawn to Present",
+    realm: "High Spire Observatories",
+    summary: "A clandestine academic fraternity dedicated to logging every paradox and preventing the unraveling of Aethelgard's tapestry.",
+    description: "Dressed in midnight-velvet robes adorned with antique gold constellation embroidery, these scholars map not just physical geography, but causal coordinates.",
+    status: "canonical",
+    secretsCount: 12,
+    tags: ["Scholars", "Astral Mystics", "Dark Academia"],
+    attributes: {
+      "Motto": "'Omnis Stella Vocem Habet' (Every Star Bears a Voice)",
+      "Headquarters": "The Silver Needle Spire",
+      "Rival Faction": "The Weavers of the Severed Thread",
+    },
+    connections: [
+      {
+        targetId: "char-vaelen",
+        targetName: "Grand Archivist Vaelen",
+        relationship: "First High Elder and Master Cartographer",
+        type: "character",
+      },
+      {
+        targetId: "loc-astris",
+        targetName: "The Sunken Citadel of Astris",
+        relationship: "Holds their subterranean forbidden archives",
+        type: "location",
+      },
+    ],
+  },
+];
+
+export const SAMPLE_TIMELINES: TimelineEpoch[] = [
+  {
+    id: "epoch-1",
+    name: "The Primeval Alignment",
+    era: "Era I",
+    dateRange: "0 – 210 A.E.",
+    summary: "The era when gods walked with celestial compasses, inscribing the laws of matter and magic onto the adamantine sky.",
+    eventsCount: 34,
+    majorConflict: "The Rebellion of the Star-Smiths",
+  },
+  {
+    id: "epoch-2",
+    name: "The Golden Orthodoxy",
+    era: "Era II",
+    dateRange: "211 – 341 A.E.",
+    summary: "The height of empire. Glass libraries were erected across every continent, and the celestial navy sailed through the ether.",
+    eventsCount: 88,
+    majorConflict: "The Succession War of the Twin Moons",
+  },
+  {
+    id: "epoch-3",
+    name: "The Shattered Sky",
+    era: "Era III",
+    dateRange: "342 – 410 A.E.",
+    summary: "The current fractured era. The sky is split into glittering geometric plates; continents float separated by the Astral Sea.",
+    eventsCount: 126,
+    majorConflict: "The Great Continuity Paradoxes & Leyline Wars",
+  },
+];
+
+export const SAMPLE_CONTRADICTIONS: ContinuityContradiction[] = [
+  {
+    id: "paradox-714",
+    code: "ANACHRONISM-714",
+    title: "Biographical Impossibility: Lady Isolda of the Silver Eclipse",
+    severity: "critical",
+    category: "temporal_overlap",
+    explanation: "Chronicle entries state Lady Isolda was sealed within the Tomb of Glass in Year 310 A.E. during the Fall of Astris. However, Chapter 14 of the High Concordat records her signing the Treaty of Val-Kyra in Year 318 A.E. without resurrection lore.",
+    detectedAtTimeline: "Main Canon • Strand Prime",
+    affectedEntities: [
+      { id: "char-isolda", name: "Lady Isolda of the Silver Eclipse", type: "character" },
+      { id: "loc-astris", name: "The Tomb of Glass, Astris", type: "location" },
+      { id: "evt-treaty", name: "Treaty of Val-Kyra (318 A.E.)", type: "event" },
+    ],
+    suggestedResolutions: [
+      {
+        id: "res-retcon-date",
+        label: "Temporal Reconciliation (Recommended)",
+        consequence: "Adjust Treaty date to Year 309 A.E. Seamlessly aligns 14 downstream chapters without altering character mortality.",
+      },
+      {
+        id: "res-astral-double",
+        label: "Lore Integration: Astral Simulacrum",
+        consequence: "Establish that the signatory was Isolda's enchanted mirror-automaton. Generates 2 new intrigue plot hooks.",
+      },
+      {
+        id: "res-branch-timeline",
+        label: "Branch Divergent Timeline",
+        consequence: "Splits strand into Timeline Beta ('The Sovereign Isolda Strand') for alternate companion novellas.",
+      },
+    ],
+  },
+  {
+    id: "paradox-428",
+    code: "RULE_BREACH-428",
+    title: "Magic Axiom Violation: Teleportation across Cold Iron Wards",
+    severity: "warning",
+    category: "magic_rule_violation",
+    explanation: "In Chapter 9, Brother Alistair teleports directly into the Vault of Astris. Axiom 3 of your world's magic codex dictates that cold meteor iron suppresses all void-transit.",
+    detectedAtTimeline: "Main Canon • Scriptorium Draft 4",
+    affectedEntities: [
+      { id: "char-alistair", name: "Brother Alistair", type: "character" },
+      { id: "loc-vault", name: "Vault of Astris", type: "location" },
+    ],
+    suggestedResolutions: [
+      {
+        id: "res-conduit",
+        label: "Add Special Artifact Exemption",
+        consequence: "Alistair used the 'Key of Obsidian Thread' to momentarily nullify the iron field.",
+      },
+      {
+        id: "res-physical-entry",
+        label: "Reframe as Physical Infiltration",
+        consequence: "Change entrance vector to the ventilation aqueduct, reinforcing security stakes.",
+      },
+    ],
+  },
+];
+
+export const SAMPLE_ATLAS_REGIONS: AtlasRegion[] = [
+  {
+    id: "reg-1",
+    name: "The Celestial Spire of Astris",
+    coordinates: { x: 42, y: 35 },
+    plane: "Celestial Firmament",
+    climate: "Perpetual Starlight & Crystalline Winds",
+    controllingFaction: "Order of Starlight Cartographers",
+    loreSnippet: "Suspended amidst the asteroid shoals, illuminated by the ancient golden astrolabe.",
+  },
+  {
+    id: "reg-2",
+    name: "The Sunken Obsidian Trenches",
+    coordinates: { x: 78, y: 64 },
+    plane: "Abyssal Nether",
+    climate: "High-Pressure Void Aether",
+    controllingFaction: "The Gilded Drowned",
+    loreSnippet: "Where fallen comets cool into black glass and ancient deities dream.",
+  },
+  {
+    id: "reg-3",
+    name: "The Whispering Steppes of Eld",
+    coordinates: { x: 22, y: 72 },
+    plane: "Terrestrial Mortal Coil",
+    climate: "Temperate Silver Mist & Aurorae",
+    controllingFaction: "The Free Scribes of Eld",
+    loreSnippet: "Vast expanses of glowing silvergrass where nomadic archivists sing the old stars.",
+  },
+];
