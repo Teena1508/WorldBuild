@@ -19,6 +19,8 @@ function getPgliteDataDir(): string {
   if (
     process.env.PG_IN_MEMORY === 'true' ||
     process.env.NODE_ENV === 'test' ||
+    process.env.VERCEL === '1' ||
+    Boolean(process.env.VERCEL) ||
     process.argv.some((arg) => arg.includes('test'))
   ) {
     return 'memory://';
