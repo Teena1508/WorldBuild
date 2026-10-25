@@ -9,8 +9,8 @@ interface ClosingCTAProps {
 }
 
 export function ClosingCTA({ onOpenUniverseModal }: ClosingCTAProps) {
-  const scrollToNexus = () => {
-    const el = document.getElementById("archive-nexus");
+  const scrollToPillars = () => {
+    const el = document.getElementById("world-pillars");
     if (el) el.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -73,12 +73,12 @@ export function ClosingCTA({ onOpenUniverseModal }: ClosingCTAProps) {
           </button>
 
           <button
-            onClick={scrollToNexus}
+            onClick={scrollToPillars}
             id="closing-cta-explore-btn"
             className="w-full sm:w-auto px-7 py-4 rounded-full text-xs font-mono tracking-[0.2em] uppercase font-medium text-[#c8c5de] border border-[#232c4f] bg-[#090d22]/80 hover:border-[#fae48f]/40 hover:text-white transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <Compass className="w-3.5 h-3.5 text-[#d4af37]" />
-            <span>Explore Nexus First</span>
+            <span>Explore The Pillars</span>
           </button>
         </motion.div>
 

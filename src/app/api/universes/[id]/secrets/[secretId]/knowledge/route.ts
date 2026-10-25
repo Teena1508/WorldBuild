@@ -77,7 +77,7 @@ export async function POST(
     return NextResponse.json({ character_secret: created.rows[0] }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to record secret knowledge';
-    const status = message.includes('does not belong') ? 400 : message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : message.includes('does not belong') ? 400 : message.includes('not found') ? 404 : 403;
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -110,7 +110,7 @@ export async function DELETE(
     return NextResponse.json({ success: true, deletedRecordId: res.rows[0].id });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to remove secret knowledge';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }

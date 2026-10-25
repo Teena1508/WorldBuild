@@ -21,6 +21,47 @@ export async function ensureDefaultUniverses(): Promise<void> {
       `UPDATE universes SET user_id = $1, is_example = true WHERE id = $2`,
       [SYSTEM_USER_ID, EXEMPLAR_UNIVERSE_ID]
     );
+
+    // Ensure demo chapters have manuscript content if previously empty
+    await query(`
+      UPDATE chapters SET 
+        content = CASE 
+          WHEN id = 'chap-demo-1' AND content = '' THEN 'The celestial needles within the Obsidian Spire trembled upon their pedestals, chiming with the dissonant hum of fracturing timelines. Grand Archivist Vaelen adjusted his ocular lenses, watching the silver leylines pulse against the black marble vault.\n\n"The resonance is shifting," whispered Lady Lyra, her fingers tracing the star-charts illuminated upon the glass floor. "If the Astris anchor collapses, the entire eastern quadrant will slip beyond the veil."\n\nVaelen did not answer immediately. In his chest, the tethered fragment of the Astrolabe burned cold—a silent reminder of the sacrifice demanded when mortals dare measure eternity. Commander Kaelen stood vigil by the bronze doorway, his halberd gleaming under the astral glow. Across the chamber, shadows pooled beneath the dais where Silas the Exiled Scribe observed in unsettling quietude.'
+          WHEN id = 'chap-demo-2' AND content = '' THEN 'Salt and shattered glass coated the lower embankments of Astris. Commander Kaelen wiped black bile from his visor as the sea broke against the seawall. The Abyssal Tide was no natural surge; it carried the dead memories of lost centuries, suffocating the incandescent lanterns of the scriptorium.\n\nLady Lyra called out from the upper balustrade, her voice carried away by the roar of churning water. "The seals are uncoupling! Vaelen has entered the inner sanctum alone!"\n\nKaelen tightened his grip upon his spear. He knew the cost of what Vaelen intended. To rebind a collapsing quadrant required feeding a living soul into the Astrolabe''s chronological cogs.'
+          WHEN id = 'chap-demo-3' AND content = '' THEN 'Deep beneath the submerged foundations of Astris, where no starlight had touched stone for five centuries, Silas knelt before the Void Gate. The obsidian door bore no keyhole, only twelve concentric circles inscribed in celestial glyphs.\n\nFrom his cloak, Silas withdrew the stolen silver prism. It pulsed in cadence with his own heartbeat. "They call it heresy," he murmured to the cold waters licking his boots. "Yet what is heresy when the stars themselves have forgotten our names?"'
+          ELSE content
+        END,
+        word_count = CASE 
+          WHEN id = 'chap-demo-1' AND (word_count = 0 OR word_count IS NULL) THEN 142
+          WHEN id = 'chap-demo-2' AND (word_count = 0 OR word_count IS NULL) THEN 110
+          WHEN id = 'chap-demo-3' AND (word_count = 0 OR word_count IS NULL) THEN 81
+          ELSE word_count
+        END
+      WHERE universe_id = $1
+    `, [EXEMPLAR_UNIVERSE_ID]);
+
+    // Ensure demo story exists and chapters are linked
+    await query(`
+      INSERT INTO stories (id, user_id, title, description, is_example, status)
+      VALUES ($1, $2, $3, $4, true, 'draft')
+      ON CONFLICT (id) DO NOTHING
+    `, [
+      'story-demo-aethelgard',
+      SYSTEM_USER_ID,
+      'The Obsidian Spire: Chronicles of Astris',
+      'The epic chronicle of Grand Archivist Vaelen and the fracture of the celestial leylines.',
+    ]);
+
+    await query(`
+      INSERT INTO story_universes (story_id, universe_id)
+      VALUES ($1, $2)
+      ON CONFLICT DO NOTHING
+    `, ['story-demo-aethelgard', EXEMPLAR_UNIVERSE_ID]);
+
+    await query(`
+      UPDATE chapters SET story_id = 'story-demo-aethelgard'
+      WHERE universe_id = $1 AND (story_id IS NULL OR story_id = '')
+    `, [EXEMPLAR_UNIVERSE_ID]);
     return;
   }
 
@@ -83,27 +124,72 @@ export async function ensureDefaultUniverses(): Promise<void> {
         title: 'The Gathering of Starlight',
         sequence_number: 1,
         summary: 'Archivists convene at the Obsidian Spire as the leylines begin to oscillate.',
+        content: `The celestial needles within the Obsidian Spire trembled upon their pedestals, chiming with the dissonant hum of fracturing timelines. Grand Archivist Vaelen adjusted his ocular lenses, watching the silver leylines pulse against the black marble vault.
+
+"The resonance is shifting," whispered Lady Lyra, her fingers tracing the star-charts illuminated upon the glass floor. "If the Astris anchor collapses, the entire eastern quadrant will slip beyond the veil."
+
+Vaelen did not answer immediately. In his chest, the tethered fragment of the Astrolabe burned cold—a silent reminder of the sacrifice demanded when mortals dare measure eternity. Commander Kaelen stood vigil by the bronze doorway, his halberd gleaming under the astral glow. Across the chamber, shadows pooled beneath the dais where Silas the Exiled Scribe observed in unsettling quietude.`,
+        word_count: 142,
+        version: 1,
+        status: 'canonized' as const,
       },
       {
         id: 'chap-demo-2',
         title: 'The Fracture of Astris',
         sequence_number: 2,
         summary: 'Commander Kaelen leads the defense as the Abyssal Tide reaches the lower archives.',
+        content: `Salt and shattered glass coated the lower embankments of Astris. Commander Kaelen wiped black bile from his visor as the sea broke against the seawall. The Abyssal Tide was no natural surge; it carried the dead memories of lost centuries, suffocating the incandescent lanterns of the scriptorium.
+
+Lady Lyra called out from the upper balustrade, her voice carried away by the roar of churning water. "The seals are uncoupling! Vaelen has entered the inner sanctum alone!"
+
+Kaelen tightened his grip upon his spear. He knew the cost of what Vaelen intended. To rebind a collapsing quadrant required feeding a living soul into the Astrolabe's chronological cogs.`,
+        word_count: 110,
+        version: 1,
+        status: 'draft' as const,
       },
       {
         id: 'chap-demo-3',
         title: 'Shadows of the Void Gate',
         sequence_number: 3,
         summary: 'Silas unseals the forbidden gateway beneath the submerged vaults.',
+        content: `Deep beneath the submerged foundations of Astris, where no starlight had touched stone for five centuries, Silas knelt before the Void Gate. The obsidian door bore no keyhole, only twelve concentric circles inscribed in celestial glyphs.
+
+From his cloak, Silas withdrew the stolen silver prism. It pulsed in cadence with his own heartbeat. "They call it heresy," he murmured to the cold waters licking his boots. "Yet what is heresy when the stars themselves have forgotten our names?"`,
+        word_count: 81,
+        version: 1,
+        status: 'draft' as const,
       },
     ];
 
+    // 3. Seed exemplar story
+    await tx.query(
+      `INSERT INTO stories (id, user_id, title, description, is_example, status)
+       VALUES ($1, $2, $3, $4, true, 'draft')
+       ON CONFLICT (id) DO NOTHING`,
+      [
+        'story-demo-aethelgard',
+        SYSTEM_USER_ID,
+        'The Obsidian Spire: Chronicles of Astris',
+        'The epic chronicle of Grand Archivist Vaelen and the fracture of the celestial leylines.',
+      ]
+    );
+
+    await tx.query(
+      `INSERT INTO story_universes (story_id, universe_id)
+       VALUES ($1, $2)
+       ON CONFLICT DO NOTHING`,
+      ['story-demo-aethelgard', EXEMPLAR_UNIVERSE_ID]
+    );
+
     for (const ch of chapters) {
       await tx.query(
-        `INSERT INTO chapters (id, universe_id, title, sequence_number, summary)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (id) DO NOTHING`,
-        [ch.id, EXEMPLAR_UNIVERSE_ID, ch.title, ch.sequence_number, ch.summary]
+        `INSERT INTO chapters (id, universe_id, story_id, title, sequence_number, summary, content, word_count, version, status)
+         VALUES ($1, $2, 'story-demo-aethelgard', $3, $4, $5, $6, $7, $8, $9)
+         ON CONFLICT (id) DO UPDATE SET
+           story_id = COALESCE(chapters.story_id, EXCLUDED.story_id),
+           content = CASE WHEN chapters.content = '' THEN EXCLUDED.content ELSE chapters.content END,
+           word_count = CASE WHEN chapters.word_count = 0 THEN EXCLUDED.word_count ELSE chapters.word_count END`,
+        [ch.id, EXEMPLAR_UNIVERSE_ID, ch.title, ch.sequence_number, ch.summary, ch.content, ch.word_count, ch.version, ch.status]
       );
     }
 

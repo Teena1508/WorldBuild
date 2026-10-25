@@ -77,7 +77,7 @@ export async function GET(
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch secret';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -132,7 +132,7 @@ export async function PUT(
     return NextResponse.json({ secret: updated.rows[0] });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to update secret';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -158,7 +158,7 @@ export async function DELETE(
     return NextResponse.json({ success: true, deletedSecretId: secretId });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to delete secret';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }

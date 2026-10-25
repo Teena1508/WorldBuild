@@ -43,7 +43,7 @@ export async function GET(
     return NextResponse.json({ locations: res.rows });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch locations';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -63,6 +63,7 @@ export async function POST(
     const description = body.description?.trim();
     const coordinatesX = body.coordinates_x !== undefined && body.coordinates_x !== null && body.coordinates_x !== '' ? Number(body.coordinates_x) : null;
     const coordinatesY = body.coordinates_y !== undefined && body.coordinates_y !== null && body.coordinates_y !== '' ? Number(body.coordinates_y) : null;
+    const aliases = body.aliases?.trim() || '';
 
     if (!name || name.length === 0) {
       return NextResponse.json({ error: 'Location name is required' }, { status: 400 });
@@ -86,9 +87,9 @@ export async function POST(
     const locId = `loc-${crypto.randomUUID().slice(0, 12)}`;
 
     await query(
-      `INSERT INTO locations (id, universe_id, name, realm, description, coordinates_x, coordinates_y, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`,
-      [locId, universeId, name, realm, description, coordinatesX, coordinatesY]
+      `INSERT INTO locations (id, universe_id, name, realm, description, coordinates_x, coordinates_y, aliases, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())`,
+      [locId, universeId, name, realm, description, coordinatesX, coordinatesY, aliases]
     );
 
     const created = await query<Location>('SELECT * FROM locations WHERE id = $1', [locId]);
@@ -96,7 +97,7 @@ export async function POST(
     return NextResponse.json({ location: created.rows[0] }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to create location';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }

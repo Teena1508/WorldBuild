@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth/session';
+import { getOptionalCurrentUser } from '@/lib/auth/session';
 
 export async function GET(request: Request) {
   try {
-    const user = await getCurrentUser(request);
+    const user = await getOptionalCurrentUser(request);
+
+    if (!user) {
+      if (request.headers.get('x-require-auth') === 'true') {
+        return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+      }
+      return NextResponse.json({ user: null });
+    }
+
     return NextResponse.json({
       user: {
         id: user.id,

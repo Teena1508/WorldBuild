@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useSyncExternalStore } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, ArrowRight } from "lucide-react";
 
@@ -9,30 +9,32 @@ interface CinematicEntranceProps {
   forceShow?: boolean;
 }
 
+function subscribe(callback: () => void) {
+  window.addEventListener("storage", callback);
+  return () => window.removeEventListener("storage", callback);
+}
+
+function getSnapshot() {
+  return sessionStorage.getItem("worldbuild_prologue_seen");
+}
+
+function getServerSnapshot() {
+  return "true";
+}
+
 export function CinematicEntrance({ onComplete, forceShow = false }: CinematicEntranceProps) {
-  const [isOpen, setIsOpen] = useState(true);
-  const [hasCheckedStorage, setHasCheckedStorage] = useState(false);
+  const seenStorage = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [dismissed, setDismissed] = useState(false);
 
   const handleDismiss = React.useCallback(() => {
     if (typeof window !== "undefined") {
       sessionStorage.setItem("worldbuild_prologue_seen", "true");
     }
-    setIsOpen(false);
+    setDismissed(true);
     onComplete?.();
   }, [onComplete]);
 
   useEffect(() => {
-    const hasSeen = typeof window !== "undefined" ? sessionStorage.getItem("worldbuild_prologue_seen") : null;
-    if (hasSeen && !forceShow) {
-      setIsOpen(false);
-      setHasCheckedStorage(true);
-      onComplete?.();
-      return;
-    }
-
-    setIsOpen(true);
-    setHasCheckedStorage(true);
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         handleDismiss();
@@ -43,13 +45,13 @@ export function CinematicEntrance({ onComplete, forceShow = false }: CinematicEn
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [forceShow, handleDismiss, onComplete]);
+  }, [handleDismiss]);
 
-  if (!hasCheckedStorage || !isOpen) return null;
+  const isOpen = forceShow || (!seenStorage && !dismissed);
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isOpen ? (
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: 1.1, ease: [0.16, 1, 0.3, 1] } }}
@@ -139,7 +141,7 @@ export function CinematicEntrance({ onComplete, forceShow = false }: CinematicEn
             Skip Prologue [ESC]
           </button>
         </motion.div>
-      )}
+      ) : null}
     </AnimatePresence>
   );
 }

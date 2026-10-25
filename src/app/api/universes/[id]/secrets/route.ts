@@ -43,7 +43,7 @@ export async function GET(
     return NextResponse.json({ secrets: res.rows });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch secrets';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -90,7 +90,7 @@ export async function POST(
     return NextResponse.json({ secret: created.rows[0] }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to create secret';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }

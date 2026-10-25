@@ -44,7 +44,7 @@ export async function GET(
     return NextResponse.json({ characters: res.rows });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch characters';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -67,6 +67,7 @@ export async function POST(
     const deathConfirmed = Boolean(body.death_confirmed);
     const deathExceptionNotes = body.death_exception_notes?.trim() || null;
     const status = body.status?.trim() || 'alive';
+    const aliases = body.aliases?.trim() || '';
 
     if (!name || name.length === 0) {
       return NextResponse.json({ error: 'Character name is required' }, { status: 400 });
@@ -105,9 +106,9 @@ export async function POST(
     const charId = `char-${crypto.randomUUID().slice(0, 12)}`;
 
     await query(
-      `INSERT INTO characters (id, universe_id, name, epithet, bio, birth_year, death_year, death_confirmed, death_exception_notes, status, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())`,
-      [charId, universeId, name, epithet, bio, birthYear, deathYear, deathConfirmed, deathExceptionNotes, status]
+      `INSERT INTO characters (id, universe_id, name, epithet, bio, birth_year, death_year, death_confirmed, death_exception_notes, status, aliases, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())`,
+      [charId, universeId, name, epithet, bio, birthYear, deathYear, deathConfirmed, deathExceptionNotes, status, aliases]
     );
 
     const created = await query<Character>('SELECT * FROM characters WHERE id = $1', [charId]);
@@ -115,7 +116,7 @@ export async function POST(
     return NextResponse.json({ character: created.rows[0] }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to create character';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }

@@ -29,6 +29,7 @@ describe('Phase 3: Universe Entity CRUD & Cross-Universe Integrity', () => {
   let secretId: string;
 
   before(async () => {
+    process.env.PG_IN_MEMORY = 'true';
     await runMigrations();
     await ensureDefaultUsers();
 

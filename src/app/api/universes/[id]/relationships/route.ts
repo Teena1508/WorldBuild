@@ -29,7 +29,7 @@ export async function GET(
     return NextResponse.json({ relationships: res.rows });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch relationships';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -115,7 +115,9 @@ export async function POST(
     return NextResponse.json({ relationship: created.rows[0] }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to create relationship';
-    const status = message.includes('does not belong') || message.includes('cannot have')
+    const status = message.includes('Authentication')
+      ? 401
+      : message.includes('does not belong') || message.includes('cannot have')
       ? 400
       : message.includes('not found') ? 404 : 403;
     return NextResponse.json({ error: message }, { status });

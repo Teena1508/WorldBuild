@@ -42,7 +42,9 @@ export async function PATCH(
     );
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to update finding';
-    const status = message.includes('Unauthorized') || message.includes('read-only')
+    const status = message.includes('Authentication')
+      ? 401
+      : message.includes('Unauthorized') || message.includes('read-only') || message.includes('Forbidden')
       ? 403
       : message.includes('not found')
       ? 404

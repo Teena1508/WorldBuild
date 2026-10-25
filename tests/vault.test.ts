@@ -11,6 +11,7 @@ describe('World Vault & PostgreSQL Universe CRUD', () => {
   let duplicatedUniverseId: string;
 
   before(async () => {
+    process.env.PG_IN_MEMORY = 'true';
     await runMigrations();
     await ensureDefaultUsers();
   });

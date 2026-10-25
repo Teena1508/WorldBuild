@@ -49,7 +49,7 @@ export async function GET(
     return NextResponse.json({ events: res.rows });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch events';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -177,7 +177,9 @@ export async function POST(
     return NextResponse.json({ event: createdEvent }, { status: 201 });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to create event';
-    const status = message.includes('Unauthorized') || message.includes('read-only')
+    const status = message.includes('Authentication')
+      ? 401
+      : message.includes('Unauthorized') || message.includes('read-only')
       ? 403
       : message.includes('not found')
       ? 404

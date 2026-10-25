@@ -48,7 +48,7 @@ export default function WorldVaultPage() {
   const [universes, setUniverses] = useState<Universe[]>([]);
   const [currentUser, setCurrentUser] = useState<{ id: string; display_name: string; email: string } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterTab, setFilterTab] = useState<"mine" | "examples" | "all">("mine");
+  const [filterTab, setFilterTab] = useState<"mine" | "examples">("mine");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -74,7 +74,7 @@ export default function WorldVaultPage() {
       const url = searchQuery.trim()
         ? `/api/universes?q=${encodeURIComponent(searchQuery.trim())}`
         : "/api/universes";
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) {
         throw new Error(`Failed to load archive: ${res.statusText}`);
       }
@@ -96,7 +96,7 @@ export default function WorldVaultPage() {
         const url = searchQuery.trim()
           ? `/api/universes?q=${encodeURIComponent(searchQuery.trim())}`
           : "/api/universes";
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: "no-store" });
         if (!res.ok) {
           throw new Error(`Failed to load archive: ${res.statusText}`);
         }
@@ -113,7 +113,7 @@ export default function WorldVaultPage() {
     };
     execute();
 
-    fetch("/api/auth/me")
+    fetch("/api/auth/me", { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data?.user && active) setCurrentUser(data.user);
@@ -130,15 +130,15 @@ export default function WorldVaultPage() {
     setTimeout(() => setSuccessToast(null), 3500);
   };
 
-  // Segmented universes
+  // Segmented universes - Personal universes strictly exclude demo universes
   const personalUniverses = universes.filter((u) => !u.is_example);
-  const demoUniverses = universes.filter((u) => u.is_example);
+  const demoUniverses = universes.filter((u) => Boolean(u.is_example));
 
-  // Filtered list
+  // Filtered list - "mine" tab ONLY displays personal universes
   const filteredUniverses = universes.filter((u) => {
     if (filterTab === "mine") return !u.is_example;
-    if (filterTab === "examples") return u.is_example;
-    return true;
+    if (filterTab === "examples") return Boolean(u.is_example);
+    return !u.is_example;
   });
 
   // Handle Create
@@ -257,20 +257,25 @@ export default function WorldVaultPage() {
 
   const handleDeleteConfirm = async () => {
     if (!selectedUniverse) return;
+    const targetId = selectedUniverse.id;
+    const targetTitle = selectedUniverse.title;
     try {
       setIsSubmitting(true);
-      const res = await fetch(`/api/universes/${selectedUniverse.id}`, {
+      const res = await fetch(`/api/universes/${targetId}`, {
         method: "DELETE",
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to delete universe");
 
+      // Optimistic update: instantly remove from screen
+      setUniverses((prev) => prev.filter((u) => u.id !== targetId));
       setIsDeleteOpen(false);
-      showToast(`Universe "${selectedUniverse.title}" dissolved from the canon`);
-      fetchUniverses();
+      showToast(`Universe "${targetTitle}" dissolved from the canon`);
+      await fetchUniverses();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Deletion failed";
-      alert(msg);
+      setErrorMessage(msg);
+      showToast(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -324,16 +329,6 @@ export default function WorldVaultPage() {
               <span className="text-[10px] text-[#fae48f] underline">Switch</span>
             </Link>
 
-            <Link
-              href="/vault/univ-demo-aethelgard"
-              id="explore-demo-universe-nav-btn"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-mono tracking-wider uppercase border border-[#d4af37]/40 bg-[#0c1024] text-[#fae48f] hover:bg-[#141b3d] hover:border-[#fae48f] transition-all cursor-pointer"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-[#fae48f]" />
-              <span className="hidden sm:inline">Demo Lorebook</span>
-              <span className="sm:hidden">Demo</span>
-            </Link>
-
             <button
               onClick={handleOpenCreate}
               id="create-new-universe-top-btn"
@@ -374,7 +369,7 @@ export default function WorldVaultPage() {
                   : "text-[#8885a6] hover:text-[#d3d0e8]"
               }`}
             >
-              Personal Canons ({personalUniverses.length})
+              Your Universes ({personalUniverses.length})
             </button>
             <button
               onClick={() => setFilterTab("examples")}
@@ -384,17 +379,7 @@ export default function WorldVaultPage() {
                   : "text-[#8885a6] hover:text-[#d3d0e8]"
               }`}
             >
-              Exemplar Demo Book ({demoUniverses.length})
-            </button>
-            <button
-              onClick={() => setFilterTab("all")}
-              className={`px-3 py-1.5 rounded text-xs font-mono tracking-wider transition-colors cursor-pointer ${
-                filterTab === "all"
-                  ? "bg-[#182147] text-[#fae48f] font-semibold"
-                  : "text-[#8885a6] hover:text-[#d3d0e8]"
-              }`}
-            >
-              All Realms ({universes.length})
+              Demo Universe ({demoUniverses.length})
             </button>
           </div>
 
@@ -478,90 +463,32 @@ export default function WorldVaultPage() {
                 </p>
               </div>
 
-              {/* Two Option Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left pt-6 pb-2">
-                {/* Option 1: Create First Universe */}
-                <div className="p-5 rounded-xl border border-[#1f284d] bg-[#070b20]/80 hover:border-[#fae48f]/40 transition-all flex flex-col justify-between">
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-xs font-mono font-semibold text-[#fae48f] uppercase tracking-wider">
-                      <Plus className="w-4 h-4 text-[#fae48f]" />
-                      <span>Start Fresh</span>
-                    </div>
-                    <h4 className="font-cinzel text-base font-bold text-[#f7f5ee]">
-                      Create Your First Universe
-                    </h4>
-                    <p className="font-cormorant text-sm text-[#9491ae] leading-relaxed">
-                      Start with a clean slate to craft your own characters, factions, branching timelines, and causal secrets from scratch.
-                    </p>
-                  </div>
-                  <button
-                    onClick={handleOpenCreate}
-                    id="create-first-universe-btn"
-                    className="gold-glow-button w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-mono tracking-wider uppercase font-semibold text-[#fae48f] cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Create Your First Universe</span>
-                  </button>
-                </div>
-
-                {/* Option 2: Explore Demo Universe */}
-                <div className="p-5 rounded-xl border border-[#1f284d] bg-[#070b20]/80 hover:border-[#fae48f]/40 transition-all flex flex-col justify-between">
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-xs font-mono font-semibold text-[#fae48f] uppercase tracking-wider">
-                      <Sparkles className="w-4 h-4 text-[#fae48f]" />
-                      <span>Explore Exemplar</span>
-                    </div>
-                    <h4 className="font-cinzel text-base font-bold text-[#f7f5ee]">
-                      Explore Demo Universe
-                    </h4>
-                    <p className="font-cormorant text-sm text-[#9491ae] leading-relaxed">
-                      Tour Aethelgard: The Astral Shards—a fully populated exemplar featuring characters, timeline events, relationship graphs, and pre-calculated Continuity Oracle findings.
-                    </p>
-                  </div>
-                  <Link
-                    href="/vault/univ-demo-aethelgard"
-                    id="explore-demo-universe-btn"
-                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-mono tracking-wider uppercase font-semibold border border-[#d4af37]/40 bg-[#0d1228] text-[#fae48f] hover:bg-[#151c3d] hover:border-[#fae48f] transition-all cursor-pointer text-center"
-                  >
-                    <ExternalLink className="w-4 h-4 text-[#fae48f]" />
-                    <span>Explore Demo Universe</span>
-                  </Link>
-                </div>
+              <div className="pt-6 pb-2 max-w-sm mx-auto">
+                <button
+                  onClick={handleOpenCreate}
+                  id="create-first-universe-btn"
+                  className="gold-glow-button w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl text-xs font-mono tracking-wider uppercase font-semibold text-[#fae48f] cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Create Your First Universe</span>
+                </button>
               </div>
 
-              <p className="text-[11px] font-mono text-[#6c6988] pt-2">
-                Exploring the demo does not alter shared data. You can duplicate it to your personal vault anytime to customize it.
+              <p className="text-[11px] font-mono text-[#8b87a8] pt-2">
+                Need reference material? Explore the{" "}
+                <button
+                  type="button"
+                  onClick={() => setFilterTab("examples")}
+                  className="text-[#fae48f] underline hover:text-white cursor-pointer"
+                >
+                  Demo Universe
+                </button>{" "}
+                tab anytime.
               </p>
             </div>
           </div>
         )}
 
-        {/* Discoverable Demo Banner for users with personal universes */}
-        {!isLoading && filterTab === "mine" && personalUniverses.length > 0 && !searchQuery && (
-          <div className="mb-8 p-4 sm:p-5 rounded-xl border border-[#d4af37]/30 bg-[#080d22]/80 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg border border-[#d4af37]/30 bg-[#0d1430] flex items-center justify-center text-[#fae48f] shrink-0">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-xs font-mono font-semibold text-[#fae48f] block uppercase tracking-wider">
-                  Interactive Demo Universe Available
-                </span>
-                <span className="font-cormorant text-sm text-[#a4a2be]">
-                  Looking for inspiration? Explore the canonical demo universe (Aethelgard) to see complex causal graphs, astrolabe timelines, and Continuity Oracle diagnostics in action.
-                </span>
-              </div>
-            </div>
-            <Link
-              href="/vault/univ-demo-aethelgard"
-              id="explore-demo-universe-banner-btn"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-mono tracking-wider uppercase border border-[#d4af37]/40 bg-[#0d1228] text-[#fae48f] hover:bg-[#151c3d] hover:border-[#fae48f] transition-all shrink-0 cursor-pointer"
-            >
-              <span>Explore Demo Universe</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        )}
 
         {/* Search or Non-mine Empty State */}
         {!isLoading && filteredUniverses.length === 0 && (searchQuery || filterTab !== "mine" || personalUniverses.length > 0) && (

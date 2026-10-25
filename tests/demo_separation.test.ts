@@ -1,6 +1,6 @@
-import { test, describe, before } from 'node:test';
+import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert';
-import { runMigrations, query } from '../src/lib/db';
+import { runMigrations, query, closeDatabase } from '../src/lib/db';
 import { ensureDefaultUsers, SYSTEM_USER_ID } from '../src/lib/auth/session';
 import { ensureDefaultUniverses, EXEMPLAR_UNIVERSE_ID } from '../src/lib/db/seed';
 import { GET as getUniverses, POST as createUniverse } from '../src/app/api/universes/route';
@@ -22,6 +22,7 @@ describe('Demo Separation & Production First-Time User Experience', () => {
   const NEW_USER_TOKEN = 'tok-fresh-scribe-token';
 
   before(async () => {
+    process.env.PG_IN_MEMORY = 'true';
     await runMigrations();
     await ensureDefaultUsers();
 
@@ -35,6 +36,10 @@ describe('Demo Separation & Production First-Time User Experience', () => {
 
     // Ensure this new user starts with 0 personal universes
     await query('DELETE FROM universes WHERE user_id = $1', [NEW_USER_ID]);
+  });
+
+  after(async () => {
+    await closeDatabase();
   });
 
   test('1. A user with no personal universes has 0 personal universes and sees empty state counts', async () => {

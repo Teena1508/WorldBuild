@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { Sparkles, Compass, Eye, BookMarked, Menu, X, ArrowUpRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Sparkles, Compass, Eye, BookMarked, Menu, X, ArrowUpRight, Feather } from "lucide-react";
 
 interface NavbarProps {
   onOpenUniverseModal: () => void;
@@ -10,6 +11,7 @@ interface NavbarProps {
 }
 
 export function Navbar({ onOpenUniverseModal, onReplayPrologue }: NavbarProps) {
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -81,43 +83,71 @@ export function Navbar({ onOpenUniverseModal, onReplayPrologue }: NavbarProps) {
             </Link>
 
             <Link
-              href="/vault/univ-demo-aethelgard"
-              className="text-xs font-mono tracking-widest uppercase text-[#9e9cb8] hover:text-[#fae48f] transition-colors flex items-center gap-1.5 cursor-pointer"
+              href={currentUser ? "/studio" : "/login?redirect=/studio"}
+              className="text-xs font-mono tracking-widest uppercase text-[#fae48f] hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer font-semibold"
             >
-              <BookMarked className="w-3.5 h-3.5 text-[#d4af37]/70" />
-              <span>Demo Book</span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded-full border border-purple-500/40 bg-purple-950/40 text-purple-300 font-mono">
-                Sample
-              </span>
+              <Feather className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>Story Studio</span>
             </Link>
 
             <button
-              onClick={() => scrollTo("continuity-oracle")}
+              onClick={() => scrollTo("world-pillars")}
               className="text-xs font-mono tracking-widest uppercase text-[#9e9cb8] hover:text-[#fae48f] transition-colors flex items-center gap-1.5 cursor-pointer"
             >
               <Eye className="w-3.5 h-3.5 text-[#d4af37]/70" />
               <span>The Oracle</span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded-full border border-[#d4af37]/40 bg-[#141b36] text-[#fae48f] font-mono">
-                AI Engine
-              </span>
             </button>
           </nav>
 
           {/* Right Action Area */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Scribe Account Indicator */}
-            <Link
-              href="/login"
-              className="px-3 py-1.5 rounded-full border border-[#1e274a] bg-[#090d22] hover:border-[#d4af37]/40 transition-all text-xs font-mono text-[#c4c1d8] flex items-center gap-2"
-              title="Switch or Inscribe Scribe Profile"
-            >
-              <div className="w-5 h-5 rounded-full bg-[#182042] border border-[#d4af37]/40 text-[#fae48f] text-[10px] flex items-center justify-center font-bold">
-                {currentUser?.display_name ? currentUser.display_name.charAt(0) : "S"}
+            {/* Scribe Account Indicator & Auth Controls */}
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/vault"
+                  className="px-3 py-1.5 rounded-full border border-[#1e274a] bg-[#090d22] hover:border-[#d4af37]/40 transition-all text-xs font-mono text-[#c4c1d8] flex items-center gap-2"
+                  title="Your Personal World Vault"
+                >
+                  <div className="w-5 h-5 rounded-full bg-[#182042] border border-[#d4af37]/40 text-[#fae48f] text-[10px] flex items-center justify-center font-bold">
+                    {currentUser.display_name ? currentUser.display_name.charAt(0).toUpperCase() : "S"}
+                  </div>
+                  <span className="truncate max-w-[120px] text-[#e0ddcf]">
+                    {currentUser.display_name}
+                  </span>
+                </Link>
+                <button
+                  onClick={async () => {
+                    await fetch("/api/auth/logout", { method: "POST" });
+                    setCurrentUser(null);
+                    router.push("/");
+                    router.refresh();
+                  }}
+                  id="nav-logout-btn"
+                  className="px-2.5 py-1.5 rounded-full border border-red-500/30 bg-red-950/20 hover:bg-red-900/40 text-red-300 text-xs font-mono transition-colors cursor-pointer"
+                  title="Sign Out"
+                >
+                  Log Out
+                </button>
               </div>
-              <span className="truncate max-w-[120px] text-[#e0ddcf]">
-                {currentUser?.display_name || "Sign In"}
-              </span>
-            </Link>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/login"
+                  id="nav-login-btn"
+                  className="px-3.5 py-1.5 rounded-full border border-[#1e274a] bg-[#090d22] hover:border-[#d4af37]/40 transition-all text-xs font-mono text-[#c4c1d8] hover:text-[#fae48f]"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/login"
+                  id="nav-signup-btn"
+                  className="px-3.5 py-1.5 rounded-full border border-[#d4af37]/40 bg-[#121936] hover:bg-[#1a234c] text-xs font-mono text-[#fae48f] font-semibold"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
 
             {onReplayPrologue && (
               <button
@@ -156,13 +186,22 @@ export function Navbar({ onOpenUniverseModal, onReplayPrologue }: NavbarProps) {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-[#202742] bg-[#070a17]/95 backdrop-blur-xl px-6 py-6 mt-3 space-y-4">
-          <button
-            onClick={() => scrollTo("archive-nexus")}
+          <Link
+            href="/vault"
+            onClick={() => setMobileMenuOpen(false)}
             className="w-full text-left py-2 text-xs font-mono tracking-widest uppercase text-[#c7c5dd] hover:text-[#fae48f] flex items-center justify-between cursor-pointer"
           >
-            <span>Explore Nexus</span>
+            <span>World Vault</span>
             <Compass className="w-4 h-4 text-[#d4af37]" />
-          </button>
+          </Link>
+          <Link
+            href={currentUser ? "/studio" : "/login?redirect=/studio"}
+            onClick={() => setMobileMenuOpen(false)}
+            className="w-full text-left py-2 text-xs font-mono tracking-widest uppercase text-[#c7c5dd] hover:text-[#fae48f] flex items-center justify-between cursor-pointer"
+          >
+            <span>Story Studio</span>
+            <Feather className="w-4 h-4 text-[#d4af37]" />
+          </Link>
           <button
             onClick={() => scrollTo("world-pillars")}
             className="w-full text-left py-2 text-xs font-mono tracking-widest uppercase text-[#c7c5dd] hover:text-[#fae48f] flex items-center justify-between cursor-pointer"
@@ -171,7 +210,7 @@ export function Navbar({ onOpenUniverseModal, onReplayPrologue }: NavbarProps) {
             <BookMarked className="w-4 h-4 text-[#d4af37]" />
           </button>
           <button
-            onClick={() => scrollTo("continuity-oracle")}
+            onClick={() => scrollTo("world-pillars")}
             className="w-full text-left py-2 text-xs font-mono tracking-widest uppercase text-[#c7c5dd] hover:text-[#fae48f] flex items-center justify-between cursor-pointer"
           >
             <span>The Oracle</span>

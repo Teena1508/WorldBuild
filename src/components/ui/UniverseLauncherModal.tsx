@@ -155,9 +155,6 @@ export function UniverseLauncherModal({ isOpen, onClose, onSelectUniverse }: Uni
             >
               <BookOpen className="w-3.5 h-3.5 text-purple-400" />
               <span>Exemplar Demo Book</span>
-              <span className="text-[9px] px-1.5 py-0.2 rounded-full border border-purple-500/40 bg-purple-950/40 text-purple-300">
-                Sample
-              </span>
               {activeTab === "demo" && (
                 <motion.div
                   layoutId="tab-underline"
@@ -252,7 +249,7 @@ export function UniverseLauncherModal({ isOpen, onClose, onSelectUniverse }: Uni
                     <span>The Chronicles of Aethelgard</span>
                   </div>
                   <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded border border-purple-400/40 bg-purple-900/40 text-purple-200">
-                    Canonical Sample Book
+                    Canonical Demo Book
                   </span>
                 </div>
                 <p className="font-cormorant text-sm text-[#c7c4db] leading-relaxed">
@@ -265,7 +262,7 @@ export function UniverseLauncherModal({ isOpen, onClose, onSelectUniverse }: Uni
                   <span>•</span>
                   <span>3 Active Paradoxes</span>
                   <span>•</span>
-                  <span className="text-amber-300">Read-Only Sample</span>
+                  <span className="text-amber-300">Read-Only Demo</span>
                 </div>
                 <div className="pt-2 flex items-center justify-end">
                   <button

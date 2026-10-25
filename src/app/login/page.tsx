@@ -7,12 +7,12 @@ import {
   Sparkles,
   ArrowRight,
   UserPlus,
-  Key,
   Mail,
   User,
   CheckCircle,
   AlertCircle,
   BookOpen,
+  Lock,
 } from "lucide-react";
 import { StarfieldCanvas } from "@/components/ui/StarfieldCanvas";
 import { CelestialAstrolabe } from "@/components/ui/CelestialAstrolabe";
@@ -21,8 +21,9 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect") || "/vault";
+  const initialTab = searchParams.get("tab") === "signup" ? "signup" : "signin";
 
-  const [activeTab, setActiveTab] = useState<"signin" | "signup" | "quick">("quick");
+  const [activeTab, setActiveTab] = useState<"signin" | "signup" | "quick">(initialTab);
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string; display_name: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -30,6 +31,7 @@ function LoginForm() {
 
   // Form states
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
 
   // Check current user session on mount
@@ -41,7 +43,7 @@ function LoginForm() {
           setCurrentUser(data.user);
         }
       })
-      .catch(() => { });
+      .catch(() => {});
   }, []);
 
   const handleQuickLogin = async (userId: string, name: string) => {
@@ -60,7 +62,7 @@ function LoginForm() {
       setTimeout(() => {
         router.push(redirectUrl);
         router.refresh();
-      }, 600);
+      }, 500);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : "Authentication failed");
       setLoading(false);
@@ -69,8 +71,8 @@ function LoginForm() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) {
-      setErrorMsg("Please enter your email or scribe identifier");
+    if (!email.trim() || !password) {
+      setErrorMsg("Please enter both your email address and password");
       return;
     }
     setLoading(true);
@@ -80,7 +82,10 @@ function LoginForm() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), displayName: displayName.trim() || undefined }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to sign in");
@@ -88,7 +93,7 @@ function LoginForm() {
       setTimeout(() => {
         router.push(redirectUrl);
         router.refresh();
-      }, 600);
+      }, 500);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : "Authentication failed");
       setLoading(false);
@@ -97,8 +102,12 @@ function LoginForm() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !displayName.trim()) {
-      setErrorMsg("Both email and scribe title are required");
+    if (!email.trim() || !displayName.trim() || !password) {
+      setErrorMsg("Email, Scribe Title, and Password are all required");
+      return;
+    }
+    if (password.length < 8) {
+      setErrorMsg("Password must be at least 8 characters in length");
       return;
     }
     setLoading(true);
@@ -111,6 +120,7 @@ function LoginForm() {
         body: JSON.stringify({
           email: email.trim(),
           display_name: displayName.trim(),
+          password,
         }),
       });
       const data = await res.json();
@@ -119,7 +129,7 @@ function LoginForm() {
       setTimeout(() => {
         router.push(redirectUrl);
         router.refresh();
-      }, 600);
+      }, 500);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : "Registration failed");
       setLoading(false);
@@ -217,7 +227,7 @@ function LoginForm() {
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="px-2 py-1 text-[#8683a3] hover:text-rose-300 transition-colors"
+                  className="px-2 py-1 text-[#8683a3] hover:text-rose-300 transition-colors cursor-pointer"
                   title="Sign out"
                 >
                   Exit
@@ -230,33 +240,36 @@ function LoginForm() {
           <div className="grid grid-cols-3 gap-1 p-1 rounded-xl border border-[#1b2347] bg-[#050819] mb-6 text-xs font-mono">
             <button
               type="button"
-              onClick={() => setActiveTab("quick")}
-              className={`py-2 rounded-lg transition-all ${activeTab === "quick"
-                  ? "bg-[#141b38] border border-[#d4af37]/40 text-[#fae48f] font-semibold shadow"
-                  : "text-[#8885a5] hover:text-white"
-                }`}
-            >
-              Quick Switch
-            </button>
-            <button
-              type="button"
               onClick={() => setActiveTab("signin")}
-              className={`py-2 rounded-lg transition-all ${activeTab === "signin"
+              className={`py-2 rounded-lg transition-all cursor-pointer ${
+                activeTab === "signin"
                   ? "bg-[#141b38] border border-[#d4af37]/40 text-[#fae48f] font-semibold shadow"
                   : "text-[#8885a5] hover:text-white"
-                }`}
+              }`}
             >
               Sign In
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("signup")}
-              className={`py-2 rounded-lg transition-all ${activeTab === "signup"
+              className={`py-2 rounded-lg transition-all cursor-pointer ${
+                activeTab === "signup"
                   ? "bg-[#141b38] border border-[#d4af37]/40 text-[#fae48f] font-semibold shadow"
                   : "text-[#8885a5] hover:text-white"
-                }`}
+              }`}
             >
-              New Scribe
+              Register
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("quick")}
+              className={`py-2 rounded-lg transition-all cursor-pointer ${
+                activeTab === "quick"
+                  ? "bg-[#141b38] border border-[#d4af37]/40 text-[#fae48f] font-semibold shadow"
+                  : "text-[#8885a5] hover:text-white"
+              }`}
+            >
+              Dev Switch
             </button>
           </div>
 
@@ -275,11 +288,119 @@ function LoginForm() {
             </div>
           )}
 
-          {/* Tab 1: Quick Scribe Switcher (Ideal for instant testing and switching between empty workspace and existing stories) */}
+          {/* Tab 1: Standard Sign In */}
+          {activeTab === "signin" && (
+            <form onSubmit={handleSignIn} className="space-y-4">
+              <div>
+                <label className="text-[11px] font-mono uppercase tracking-wider text-[#fae48f] block mb-1.5 flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Scribe Email Address</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. scribe@domain.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#1e274d] bg-[#070a1e] text-xs font-mono text-[#dedbd2] placeholder-[#5a5775] focus:outline-none focus:border-[#fae48f]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-mono uppercase tracking-wider text-[#fae48f] block mb-1.5 flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Password</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#1e274d] bg-[#070a1e] text-xs font-mono text-[#dedbd2] placeholder-[#5a5775] focus:outline-none focus:border-[#fae48f]"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 rounded-xl gold-glow-button text-xs font-mono uppercase tracking-widest font-semibold text-[#fae48f] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 mt-2"
+              >
+                <span>{loading ? "Verifying..." : "Sign In to Vault"}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </form>
+          )}
+
+          {/* Tab 2: Register (New Scribe) */}
+          {activeTab === "signup" && (
+            <form onSubmit={handleSignUp} className="space-y-4">
+              <div>
+                <label className="text-[11px] font-mono uppercase tracking-wider text-[#fae48f] block mb-1.5 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5" />
+                  <span>Scribe Title / Display Name *</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. High Chronicler Elian"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#1e274d] bg-[#070a1e] text-xs font-mono text-[#dedbd2] placeholder-[#5a5775] focus:outline-none focus:border-[#fae48f]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-mono uppercase tracking-wider text-[#fae48f] block mb-1.5 flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5" />
+                  <span>Email Address *</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="e.g. chronicler@domain.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#1e274d] bg-[#070a1e] text-xs font-mono text-[#dedbd2] placeholder-[#5a5775] focus:outline-none focus:border-[#fae48f]"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-mono uppercase tracking-wider text-[#fae48f] block mb-1.5 flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Password * (Min 8 Characters)</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  placeholder="Create a secure password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#1e274d] bg-[#070a1e] text-xs font-mono text-[#dedbd2] placeholder-[#5a5775] focus:outline-none focus:border-[#fae48f]"
+                />
+              </div>
+
+              <p className="text-[11px] font-cormorant text-[#9895b0]">
+                Creating an account initializes a private, sovereign workspace with 0 demo bleed-through.
+              </p>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 rounded-xl gold-glow-button text-xs font-mono uppercase tracking-widest font-semibold text-[#fae48f] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 mt-2"
+              >
+                <span>{loading ? "Inscribing..." : "Create Account & Enter Vault"}</span>
+                <UserPlus className="w-4 h-4" />
+              </button>
+            </form>
+          )}
+
+          {/* Tab 3: Quick Dev Switcher */}
           {activeTab === "quick" && (
             <div className="space-y-3">
               <p className="text-xs font-mono text-[#8a88ab] mb-2">
-                Select a persona to test the personal workspace experience:
+                Development persona shortcuts for testing isolated states:
               </p>
 
               {/* Profile 1: High Scribe */}
@@ -298,7 +419,7 @@ function LoginForm() {
                       High Scribe
                     </div>
                     <div className="text-[10px] font-mono text-[#7e7c9e]">
-                      Primary Scribe • Contains personal universe
+                      Existing User • Personal universe
                     </div>
                   </div>
                 </div>
@@ -321,7 +442,7 @@ function LoginForm() {
                       Novice Chronicler
                     </div>
                     <div className="text-[10px] font-mono text-[#7e7c9e]">
-                      Clean Persona • 0 personal stories (Neo story placeholders)
+                      Clean Persona • 0 personal universes (Pristine empty vault)
                     </div>
                   </div>
                 </div>
@@ -351,102 +472,10 @@ function LoginForm() {
             </div>
           )}
 
-          {/* Tab 2: Standard Sign In */}
-          {activeTab === "signin" && (
-            <form onSubmit={handleSignIn} className="space-y-4">
-              <div>
-                <label className="text-[11px] font-mono uppercase tracking-wider text-[#fae48f] block mb-1.5 flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5" />
-                  <span>Scribe Email or Identifier</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. archivist@worldbuild.sanctum"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#1e274d] bg-[#070a1e] text-xs font-mono text-[#dedbd2] placeholder-[#5a5775] focus:outline-none focus:border-[#fae48f]"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-mono uppercase tracking-wider text-[#8b88a8] block mb-1.5 flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5" />
-                  <span>Sanctum Passkey (Optional)</span>
-                </label>
-                <input
-                  type="password"
-                  placeholder="••••••••••••"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#1e274d] bg-[#070a1e] text-xs font-mono text-[#dedbd2] placeholder-[#5a5775] focus:outline-none focus:border-[#fae48f]"
-                />
-                <span className="text-[10px] font-mono text-[#6c6987] mt-1 block">
-                  Passwordless authentication enabled for local studio.
-                </span>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 rounded-xl gold-glow-button text-xs font-mono uppercase tracking-widest font-semibold text-[#fae48f] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 mt-2"
-              >
-                <span>{loading ? "Harmonizing..." : "Enter Vault"}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
-          )}
-
-          {/* Tab 3: Sign Up (Inscribe New Scribe) */}
-          {activeTab === "signup" && (
-            <form onSubmit={handleSignUp} className="space-y-4">
-              <div>
-                <label className="text-[11px] font-mono uppercase tracking-wider text-[#fae48f] block mb-1.5 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5" />
-                  <span>Scribe Title / Display Name *</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Chronicler of the West"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#1e274d] bg-[#070a1e] text-xs font-mono text-[#dedbd2] placeholder-[#5a5775] focus:outline-none focus:border-[#fae48f]"
-                />
-              </div>
-
-              <div>
-                <label className="text-[11px] font-mono uppercase tracking-wider text-[#fae48f] block mb-1.5 flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5" />
-                  <span>Email Address *</span>
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="e.g. chronicler@domain.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#1e274d] bg-[#070a1e] text-xs font-mono text-[#dedbd2] placeholder-[#5a5775] focus:outline-none focus:border-[#fae48f]"
-                />
-              </div>
-
-              <p className="text-[11px] font-cormorant text-[#9895b0]">
-                Creating an account initializes a private, sovereign workspace with 0 demo bleed-through.
-              </p>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 rounded-xl gold-glow-button text-xs font-mono uppercase tracking-widest font-semibold text-[#fae48f] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 mt-2"
-              >
-                <span>{loading ? "Inscribing..." : "Inscribe Scribe Record"}</span>
-                <UserPlus className="w-4 h-4" />
-              </button>
-            </form>
-          )}
-
           {/* Footer note */}
           <div className="mt-6 pt-4 border-t border-[#1a2140] text-center">
             <span className="text-[10px] font-mono text-[#6e6c8c]">
-              All world data is backed by local PostgreSQL persistence • Zero cloud lock-in
+              All world data is backed by local PostgreSQL persistence • Strict multi-user isolation
             </span>
           </div>
         </div>
@@ -476,4 +505,3 @@ export default function LoginPage() {
     </Suspense>
   );
 }
-

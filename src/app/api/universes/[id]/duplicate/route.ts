@@ -1,7 +1,13 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { query, transaction } from '@/lib/db';
-import { getCurrentUser, verifyUniverseAccess } from '@/lib/auth/session';
+import {
+  getCurrentUser,
+  verifyUniverseAccess,
+  AuthenticationError,
+  ForbiddenError,
+  NotFoundError,
+} from '@/lib/auth/session';
 import {
   Universe,
   Character,
@@ -15,6 +21,7 @@ import {
   CharacterSecret,
   SecretEventUsage,
   ContinuityFinding,
+  Story,
 } from '@/lib/db/types';
 
 export async function POST(
@@ -94,9 +101,35 @@ export async function POST(
         const newChapId = `chap-${crypto.randomUUID().slice(0, 12)}`;
         chapMap[ch.id] = newChapId;
         await tx.query(
-          `INSERT INTO chapters (id, universe_id, title, sequence_number, summary)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [newChapId, newUniverseId, ch.title, ch.sequence_number, ch.summary]
+          `INSERT INTO chapters (id, universe_id, title, sequence_number, summary, content, word_count, version, status)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, 1, $8)`,
+          [newChapId, newUniverseId, ch.title, ch.sequence_number, ch.summary, ch.content || '', ch.word_count || 0, ch.status || 'draft']
+        );
+      }
+
+      // 4b. Clone linked stories for the duplicated universe
+      const linkedStories = await tx.query<Story>(
+        `SELECT s.* FROM stories s
+         JOIN story_universes su ON s.id = su.story_id
+         WHERE su.universe_id = $1`,
+        [sourceUniverseId]
+      );
+      for (const st of linkedStories.rows) {
+        const newStoryId = `story-${crypto.randomUUID().slice(0, 12)}`;
+        await tx.query(
+          `INSERT INTO stories (id, user_id, series_id, series_order, title, description, cover_url, author_notes, is_example, status)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false, 'draft')`,
+          [newStoryId, user.id, st.series_id, st.series_order, `${st.title} (Copy)`, st.description, st.cover_url, st.author_notes]
+        );
+        await tx.query(
+          `INSERT INTO story_universes (story_id, universe_id)
+           VALUES ($1, $2)`,
+          [newStoryId, newUniverseId]
+        );
+        // Link cloned chapters to this new story
+        await tx.query(
+          `UPDATE chapters SET story_id = $1 WHERE universe_id = $2`,
+          [newStoryId, newUniverseId]
         );
       }
 
@@ -257,8 +290,18 @@ export async function POST(
     const createdRes = await query<Universe>('SELECT * FROM universes WHERE id = $1', [newUniverseId]);
     return NextResponse.json({ universe: createdRes.rows[0] }, { status: 201 });
   } catch (error: unknown) {
+    if (error instanceof AuthenticationError) {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    if (error instanceof ForbiddenError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    if (error instanceof NotFoundError) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
     const message = error instanceof Error ? error.message : 'Duplication failed';
+    const status = message.toLowerCase().includes('not found') ? 404 : (message.toLowerCase().includes('authentication') ? 401 : 500);
     console.error('Error duplicating universe:', error);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status });
   }
 }

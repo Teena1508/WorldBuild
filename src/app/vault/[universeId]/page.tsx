@@ -27,14 +27,16 @@ import {
   Layers,
   Clock,
   Share2,
+  Feather,
 } from "lucide-react";
 import { StarfieldCanvas } from "@/components/ui/StarfieldCanvas";
 import { Universe, Character, Location, Chapter, UniverseEvent, Relationship, Secret, ContinuityFinding } from "@/lib/db/types";
 import { ContinuityOracleView } from "@/components/oracle/ContinuityOracleView";
 import { RelationshipGraphView } from "@/components/visualizations/RelationshipGraphView";
 import { ChronologicalTimelineView } from "@/components/visualizations/ChronologicalTimelineView";
+import { StoryStudio } from "@/components/studio/StoryStudio";
 
-type WorkspaceTab = "overview" | "characters" | "locations" | "chapters" | "events" | "timeline" | "relationships" | "graph" | "secrets" | "oracle";
+type WorkspaceTab = "overview" | "studio" | "characters" | "locations" | "chapters" | "events" | "timeline" | "relationships" | "graph" | "secrets" | "oracle";
 
 interface CharacterWithCounts extends Character {
   events_count?: number;
@@ -65,6 +67,21 @@ interface EventDependencyItem {
   reason?: string | null;
 }
 
+interface ChapterAppearanceViewItem {
+  id: string;
+  chapter_id: string;
+  chapter_sequence: number;
+  chapter_title: string;
+  status: string;
+  relationship_type: string;
+  mention_count?: number;
+  passage?: string;
+  matched_alias?: string;
+  associated_locations?: Array<{ entity_name?: string; name?: string }>;
+  associated_characters?: Array<{ entity_name?: string; name?: string }>;
+  associated_events?: Array<{ title: string }>;
+}
+
 interface EventWithDetails extends Omit<UniverseEvent, 'location_name' | 'chapter_title' | 'participants' | 'dependencies'> {
   location_name?: string | null;
   participants_count?: number;
@@ -72,6 +89,7 @@ interface EventWithDetails extends Omit<UniverseEvent, 'location_name' | 'chapte
   chapter_title?: string | null;
   participants?: EventParticipantItem[];
   dependencies?: EventDependencyItem[];
+  chapter_links?: ChapterAppearanceViewItem[];
 }
 
 interface RelationshipWithDetails extends Relationship {
@@ -99,6 +117,7 @@ interface ModalDetailsState {
   relationships?: Array<{ id: string; target_character_name: string; relationship_type: string; intensity: number }>;
   secrets?: Array<{ character_secret_id?: string; id?: string; title: string; learned_year?: number | null; severity?: string }>;
   present_characters?: Array<{ id: string; name: string; role?: string; event_title?: string }>;
+  chapter_appearances?: ChapterAppearanceViewItem[];
   event?: EventWithDetails;
   secret?: SecretWithDetails;
 }
@@ -132,6 +151,8 @@ function UniverseWorkspaceContent() {
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedStudioChapterId, setSelectedStudioChapterId] = useState<string | null>(null);
+  const [studioInitialTab, setStudioInitialTab] = useState<"prose" | "notes" | "analysis">("prose");
 
   const handleDuplicateDemo = async () => {
     if (!universe) return;
@@ -147,6 +168,26 @@ function UniverseWorkspaceContent() {
       const msg = err instanceof Error ? err.message : "Failed to duplicate demo";
       setErrorBanner(msg);
       setIsDuplicating(false);
+    }
+  };
+  const [isDissolveUniverseOpen, setIsDissolveUniverseOpen] = useState(false);
+  const [isDissolvingUniverse, setIsDissolvingUniverse] = useState(false);
+
+  const handleDissolveUniverseConfirm = async () => {
+    if (!universe) return;
+    try {
+      setIsDissolvingUniverse(true);
+      const res = await fetch(`/api/universes/${universe.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to dissolve universe");
+      router.push("/vault");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to dissolve universe";
+      setErrorBanner(msg);
+      setIsDissolvingUniverse(false);
+      setIsDissolveUniverseOpen(false);
     }
   };
 
@@ -240,7 +281,7 @@ function UniverseWorkspaceContent() {
             setLocations(d.locations || []);
           }
         }
-        if (activeTab === "overview" || activeTab === "chapters" || activeTab === "timeline") {
+        if (activeTab === "overview" || activeTab === "chapters" || activeTab === "studio" || activeTab === "timeline") {
           const res = await fetch(`/api/universes/${universeId}/chapters`);
           if (res.ok && !ignore) {
             const d = await res.json();
@@ -332,6 +373,30 @@ function UniverseWorkspaceContent() {
     }
   };
 
+  const handleUpdateEntityLink = async (linkId: string, chapterId: string, updates: Record<string, unknown>) => {
+    try {
+      const res = await fetch(`/api/universes/${universeId}/chapters/${chapterId}/entities/${linkId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updates),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (modalDetails?.chapter_appearances) {
+          setModalDetails({
+            ...modalDetails,
+            chapter_appearances: modalDetails.chapter_appearances.map((app: ChapterAppearanceViewItem) =>
+              app.id === linkId ? { ...app, ...data.link } : app
+            ),
+          });
+        }
+        showToast("Entity link updated successfully");
+      }
+    } catch {
+      showToast("Failed to update entity link");
+    }
+  };
+
   const openCreateModal = (type: WorkspaceTab) => {
     if (universe?.is_example) {
       setErrorBanner("The canonical demo universe is protected and read-only. Duplicate it to your personal vault to make edits.");
@@ -341,9 +406,9 @@ function UniverseWorkspaceContent() {
     setSelectedItem(null);
     setFormErrors({});
     if (type === "characters") {
-      setFormData({ name: "", epithet: "", bio: "", birth_year: "", death_year: "", death_confirmed: false, death_exception_notes: "", status: "alive" });
+      setFormData({ name: "", epithet: "", bio: "", birth_year: "", death_year: "", death_confirmed: false, death_exception_notes: "", status: "alive", aliases: "" });
     } else if (type === "locations") {
-      setFormData({ name: "", realm: "Celestial Firmament", description: "", coordinates_x: "", coordinates_y: "" });
+      setFormData({ name: "", realm: "Celestial Firmament", description: "", coordinates_x: "", coordinates_y: "", aliases: "" });
     } else if (type === "chapters") {
       const nextSeq = chapters.length > 0 ? Math.max(...chapters.map((c) => c.sequence_number)) + 1 : 1;
       setFormData({ title: "", sequence_number: nextSeq, summary: "" });
@@ -616,19 +681,6 @@ function UniverseWorkspaceContent() {
           </div>
 
           <div className="flex items-center gap-3 text-xs font-mono">
-            {!universe.is_example && (
-              <Link
-                href="/vault/univ-demo-aethelgard"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 text-purple-300 hover:border-purple-400 hover:text-white transition-all text-xs font-mono"
-                title="Open the Exemplar Demo Lorebook for reference in a separate tab"
-              >
-                <BookOpen className="w-3.5 h-3.5 text-purple-400" />
-                <span className="hidden sm:inline">Reference Demo Book</span>
-                <span className="sm:hidden">Demo</span>
-              </Link>
-            )}
             <button
               onClick={reloadData}
               title="Refresh Workspace Data"
@@ -636,6 +688,16 @@ function UniverseWorkspaceContent() {
             >
               <RefreshCw className="w-3.5 h-3.5" />
             </button>
+            {isOwner && !universe.is_example && (
+              <button
+                onClick={() => setIsDissolveUniverseOpen(true)}
+                title="Dissolve this universe"
+                className="px-2.5 py-1.5 rounded-lg border border-rose-500/40 bg-rose-950/20 text-rose-300 hover:bg-rose-900/40 hover:text-rose-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Dissolve</span>
+              </button>
+            )}
             <Link
               href={`/vault`}
               className="text-[#8886a8] hover:text-[#fae48f] transition-colors"
@@ -651,6 +713,7 @@ function UniverseWorkspaceContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-1 py-1">
           {[
             { id: "overview", label: "Overview", icon: Layers },
+            { id: "studio", label: "Story Studio", icon: Feather },
             { id: "characters", label: `Characters (${universe.stats?.charactersCount || 0})`, icon: Users },
             { id: "relationships", label: `Relationships (${universe.stats?.relationshipsCount || 0})`, icon: GitBranch },
             { id: "graph", label: `Relationship Graph`, icon: Share2 },
@@ -1266,6 +1329,21 @@ function UniverseWorkspaceContent() {
         )}
 
         {/* ======================================================== */}
+        {/* TAB: STORY STUDIO */}
+        {/* ======================================================== */}
+        {activeTab === "studio" && (
+          <div className="animate-fade-in">
+            <StoryStudio
+              universe={universe}
+              initialChapters={chapters}
+              initialSelectedChapterId={selectedStudioChapterId}
+              initialTab={studioInitialTab}
+              onUniverseRefresh={() => setRefreshKey((k) => k + 1)}
+            />
+          </div>
+        )}
+
+        {/* ======================================================== */}
         {/* TAB 4: CHAPTERS */}
         {/* ======================================================== */}
         {activeTab === "chapters" && (
@@ -1274,23 +1352,32 @@ function UniverseWorkspaceContent() {
               <span className="text-xs font-mono tracking-wider uppercase text-[#8885a6]">
                 Manuscript Sequence &amp; Narrative Arcs
               </span>
-              {universe.is_example ? (
+              <div className="flex items-center gap-2.5">
                 <button
-                  onClick={handleDuplicateDemo}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-[#d4af37]/40 bg-[#0d1228] text-xs font-mono tracking-wider uppercase text-[#fae48f] hover:bg-[#151c3d] cursor-pointer"
+                  onClick={() => setActiveTab("studio")}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-[#d4af37]/50 bg-[#0e163b] text-xs font-mono tracking-wider uppercase text-[#fae48f] hover:bg-[#162152] transition-all cursor-pointer font-bold shadow-[0_0_15px_rgba(212,175,55,0.15)]"
                 >
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>Duplicate Demo to Inscribe</span>
+                  <Feather className="w-3.5 h-3.5" />
+                  <span>Open Story Studio</span>
                 </button>
-              ) : (
-                <button
-                  onClick={() => openCreateModal("chapters")}
-                  className="gold-glow-button inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-mono tracking-wider uppercase font-semibold text-[#fae48f] cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Inscribe Chapter</span>
-                </button>
-              )}
+                {universe.is_example ? (
+                  <button
+                    onClick={handleDuplicateDemo}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-[#d4af37]/40 bg-[#0d1228] text-xs font-mono tracking-wider uppercase text-[#fae48f] hover:bg-[#151c3d] cursor-pointer"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Duplicate Demo to Inscribe</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => openCreateModal("chapters")}
+                    className="gold-glow-button inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-mono tracking-wider uppercase font-semibold text-[#fae48f] cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Inscribe Chapter</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -1313,10 +1400,39 @@ function UniverseWorkspaceContent() {
                       <p className="font-cormorant text-xs text-[#8c8aab] line-clamp-1 mt-0.5">
                         {chap.summary}
                       </p>
+                      {chap.word_count ? (
+                        <span className="text-[10px] font-mono text-[#747192] mt-1 inline-block">
+                          {chap.word_count} words • v{chap.version || 1}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedStudioChapterId(chap.id);
+                        setStudioInitialTab("prose");
+                        setActiveTab("studio");
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#d4af37]/30 bg-[#0c122e] text-xs font-mono text-[#fae48f] hover:bg-[#131c47] transition-all cursor-pointer"
+                      title="Write chapter prose in Story Studio"
+                    >
+                      <Feather className="w-3 h-3" />
+                      <span>Write</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelectedStudioChapterId(chap.id);
+                        setStudioInitialTab("analysis");
+                        setActiveTab("studio");
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#d4af37]/40 bg-[#12183a] text-xs font-mono text-[#fae48f] hover:bg-[#1a2354] transition-all cursor-pointer font-semibold shadow-[0_0_10px_rgba(212,175,55,0.1)]"
+                      title="Analyze this chapter in Continuity Oracle"
+                    >
+                      <Sparkles className="w-3 h-3 text-[#fae48f]" />
+                      <span>Analyze</span>
+                    </button>
                     <span className="text-xs font-mono text-[#787596]">
                       {chap.events_count || 0} Events Linked
                     </span>
@@ -1802,6 +1918,120 @@ function UniverseWorkspaceContent() {
                       </div>
                     </div>
                   )}
+
+                  {/* Chapter Appearances & Mentions */}
+                  <div className="pt-2 border-t border-[#182042]">
+                    <span className="text-[#fae48f] uppercase block mb-1.5 font-bold">
+                      Manuscript Chapter Appearances ({modalDetails?.chapter_appearances?.length || 0}):
+                    </span>
+                    {(!modalDetails?.chapter_appearances || modalDetails.chapter_appearances.length === 0) ? (
+                      <p className="text-[11px] text-[#716e91] italic p-2.5 rounded border border-[#161d3a] bg-[#050716]">
+                        No chapter manuscript detections yet. Inscribe or edit chapters mentioning this character to track appearances automatically.
+                      </p>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {modalDetails.chapter_appearances.map((app: ChapterAppearanceViewItem) => (
+                          <div
+                            key={app.id}
+                            className="p-3 rounded-lg border border-[#1d264e] bg-[#050819] hover:border-[#fae48f]/30 transition-all space-y-2"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="font-cinzel font-bold text-sm text-[#faf8f2]">
+                                  Ch {app.chapter_sequence}: {app.chapter_title}
+                                </span>
+                                <span
+                                  className={`text-[9px] uppercase px-1.5 py-0.5 rounded font-mono border ${
+                                    app.status === "confirmed"
+                                      ? "border-emerald-500/40 bg-emerald-950/40 text-emerald-300"
+                                      : app.status === "needs_review"
+                                      ? "border-amber-500/40 bg-amber-950/40 text-amber-300"
+                                      : "border-sky-500/40 bg-sky-950/40 text-sky-300"
+                                  }`}
+                                >
+                                  {app.status}
+                                </span>
+                                <span
+                                  className={`text-[9px] uppercase px-1.5 py-0.5 rounded font-mono border ${
+                                    app.relationship_type === "appears"
+                                      ? "border-purple-500/40 bg-purple-950/40 text-purple-300"
+                                      : "border-indigo-500/40 bg-indigo-950/40 text-indigo-300"
+                                  }`}
+                                >
+                                  {app.relationship_type === "appears" ? "Scene Appearance" : "Simple Mention"}
+                                </span>
+                              </div>
+
+                              {/* Author Correction Actions */}
+                              {!universe?.is_example && (
+                                <div className="flex items-center gap-1.5">
+                                  {app.status !== "confirmed" && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateEntityLink(app.id, app.chapter_id, { status: "confirmed" })}
+                                      className="px-2 py-0.5 rounded text-[10px] bg-emerald-900/40 text-emerald-300 border border-emerald-600/30 hover:bg-emerald-800/40 cursor-pointer"
+                                    >
+                                      ✓ Confirm
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleUpdateEntityLink(app.id, app.chapter_id, {
+                                        relationship_type: app.relationship_type === "appears" ? "mentioned" : "appears",
+                                      })
+                                    }
+                                    className="px-2 py-0.5 rounded text-[10px] bg-[#111738] text-[#fae48f] border border-[#26315e] hover:bg-[#1a2352] cursor-pointer"
+                                  >
+                                    {app.relationship_type === "appears" ? "Mark Mention" : "Mark Appears"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateEntityLink(app.id, app.chapter_id, { status: "dismissed" })}
+                                    className="px-1.5 py-0.5 rounded text-[10px] text-rose-400 hover:bg-rose-950/40 cursor-pointer"
+                                    title="Dismiss Link"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            {app.passage && (
+                              <blockquote className="font-cormorant text-xs italic text-[#b5b2cf] pl-2.5 border-l-2 border-[#fae48f]/40 leading-relaxed">
+                                &ldquo;{app.passage}&rdquo;
+                              </blockquote>
+                            )}
+
+                            {/* Associated locations & events in this chapter */}
+                            <div className="flex flex-wrap items-center gap-3 text-[10px] text-[#787596] pt-1 border-t border-[#141b38]">
+                              {app.associated_locations && app.associated_locations.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <span>📍 Setting:</span>
+                                  <span className="text-[#dedbd0]">
+                                    {app.associated_locations.map((l) => l.entity_name || l.name).join(", ")}
+                                  </span>
+                                </div>
+                              )}
+                              {app.associated_events && app.associated_events.length > 0 && (
+                                <div className="flex items-center gap-1">
+                                  <span>⚔️ Events:</span>
+                                  <span className="text-[#dedbd0]">
+                                    {app.associated_events.map((e) => e.title).join(", ")}
+                                  </span>
+                                </div>
+                              )}
+                              {app.matched_alias && (
+                                <span className="text-[#8885a5]">
+                                  Matched: &ldquo;{app.matched_alias}&rdquo;
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })()}
@@ -1831,6 +2061,113 @@ function UniverseWorkspaceContent() {
                     </div>
                   </div>
                 )}
+
+                {/* Chapter Scenes & Mentions */}
+                <div className="pt-2 border-t border-[#182042]">
+                  <span className="text-[#fae48f] uppercase block mb-1.5 font-bold">
+                    Chapter Scenes & Mentions ({modalDetails?.chapter_appearances?.length || 0}):
+                  </span>
+                  {(!modalDetails?.chapter_appearances || modalDetails.chapter_appearances.length === 0) ? (
+                    <p className="text-[11px] text-[#716e91] italic p-2.5 rounded border border-[#161d3a] bg-[#050716]">
+                      No chapter scenes recorded for this location yet.
+                    </p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {modalDetails.chapter_appearances.map((app: ChapterAppearanceViewItem) => (
+                        <div
+                          key={app.id}
+                          className="p-3 rounded-lg border border-[#1d264e] bg-[#050819] hover:border-[#fae48f]/30 transition-all space-y-2"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="font-cinzel font-bold text-sm text-[#faf8f2]">
+                                Ch {app.chapter_sequence}: {app.chapter_title}
+                              </span>
+                              <span
+                                className={`text-[9px] uppercase px-1.5 py-0.5 rounded font-mono border ${
+                                  app.status === "confirmed"
+                                    ? "border-emerald-500/40 bg-emerald-950/40 text-emerald-300"
+                                    : app.status === "needs_review"
+                                    ? "border-amber-500/40 bg-amber-950/40 text-amber-300"
+                                    : "border-sky-500/40 bg-sky-950/40 text-sky-300"
+                                }`}
+                              >
+                                {app.status}
+                              </span>
+                              <span
+                                className={`text-[9px] uppercase px-1.5 py-0.5 rounded font-mono border ${
+                                  app.relationship_type === "setting"
+                                    ? "border-amber-500/40 bg-amber-950/40 text-amber-300"
+                                    : "border-indigo-500/40 bg-indigo-950/40 text-indigo-300"
+                                }`}
+                              >
+                                {app.relationship_type === "setting" ? "Scene Setting" : "Simple Mention"}
+                              </span>
+                            </div>
+
+                            {!universe?.is_example && (
+                              <div className="flex items-center gap-1.5">
+                                {app.status !== "confirmed" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateEntityLink(app.id, app.chapter_id, { status: "confirmed" })}
+                                    className="px-2 py-0.5 rounded text-[10px] bg-emerald-900/40 text-emerald-300 border border-emerald-600/30 hover:bg-emerald-800/40 cursor-pointer"
+                                  >
+                                    ✓ Confirm
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleUpdateEntityLink(app.id, app.chapter_id, {
+                                      relationship_type: app.relationship_type === "setting" ? "mentioned" : "setting",
+                                    })
+                                  }
+                                  className="px-2 py-0.5 rounded text-[10px] bg-[#111738] text-[#fae48f] border border-[#26315e] hover:bg-[#1a2352] cursor-pointer"
+                                >
+                                  {app.relationship_type === "setting" ? "Mark Mention" : "Mark Setting"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateEntityLink(app.id, app.chapter_id, { status: "dismissed" })}
+                                  className="px-1.5 py-0.5 rounded text-[10px] text-rose-400 hover:bg-rose-950/40 cursor-pointer"
+                                  title="Dismiss Link"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          {app.passage && (
+                            <blockquote className="font-cormorant text-xs italic text-[#b5b2cf] pl-2.5 border-l-2 border-[#fae48f]/40 leading-relaxed">
+                              &ldquo;{app.passage}&rdquo;
+                            </blockquote>
+                          )}
+
+                          <div className="flex flex-wrap items-center gap-3 text-[10px] text-[#787596] pt-1 border-t border-[#141b38]">
+                            {app.associated_characters && app.associated_characters.length > 0 && (
+                              <div className="flex items-center gap-1">
+                                <span>👥 Present Characters:</span>
+                                <span className="text-[#dedbd0]">
+                                  {app.associated_characters.map((c) => c.entity_name || c.name).join(", ")}
+                                </span>
+                              </div>
+                            )}
+                            {app.associated_events && app.associated_events.length > 0 && (
+                              <div className="flex items-center gap-1">
+                                <span>⚔️ Events:</span>
+                                <span className="text-[#dedbd0]">
+                                  {app.associated_events.map((e) => e.title).join(", ")}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1871,6 +2208,30 @@ function UniverseWorkspaceContent() {
                       {modalDetails.event.dependencies.map((d) => (
                         <div key={d.id} className="p-2 rounded border border-[#20284e] bg-[#0a0e24]">
                           &larr; Requires: {d.predecessor_title} {d.predecessor_year ? `(Year ${d.predecessor_year})` : ""}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Chapter References & Evidence */}
+                {modalDetails?.event?.chapter_links && modalDetails.event.chapter_links.length > 0 && (
+                  <div className="pt-2 border-t border-[#182042]">
+                    <span className="text-[#fae48f] uppercase block mb-1 font-bold">Linked Chapters & Evidence:</span>
+                    <div className="space-y-1.5">
+                      {modalDetails.event.chapter_links.map((cl: ChapterAppearanceViewItem) => (
+                        <div key={cl.id} className="p-2.5 rounded border border-[#20284e] bg-[#0a0e24] space-y-1">
+                          <div className="flex justify-between items-center text-xs">
+                            <span className="font-bold text-[#faf8f2]">Ch {cl.chapter_sequence}: {cl.chapter_title}</span>
+                            <span className="text-[10px] text-[#fae48f] uppercase px-1.5 py-0.5 rounded border border-[#fae48f]/30">
+                              {cl.relationship_type}
+                            </span>
+                          </div>
+                          {cl.passage && (
+                            <p className="font-cormorant italic text-[#8c8aab] text-xs pl-2 border-l border-[#fae48f]/40">
+                              &ldquo;{cl.passage}&rdquo;
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -2015,6 +2376,16 @@ function UniverseWorkspaceContent() {
                     />
                   </div>
                   <div>
+                    <label className="block text-xs font-mono uppercase text-[#a7a5c4] mb-1">Aliases / Known Titles (comma-separated)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Vaelen, The Scribe, Chronicler of the Deep"
+                      value={val("aliases")}
+                      onChange={(e) => setFormData({ ...formData, aliases: e.target.value })}
+                      className="w-full px-3.5 py-2 rounded-lg bg-[#040612] border border-[#232b50] text-sm text-[#faf8f2] focus:outline-none focus:border-[#fae48f]"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-xs font-mono uppercase text-[#a7a5c4] mb-1">Biography / Lore *</label>
                     <textarea
                       rows={3}
@@ -2100,6 +2471,16 @@ function UniverseWorkspaceContent() {
                       placeholder="e.g. The Sunken Citadel of Astris"
                       value={val("name")}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full px-3.5 py-2 rounded-lg bg-[#040612] border border-[#232b50] text-sm text-[#faf8f2] focus:outline-none focus:border-[#fae48f]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-mono uppercase text-[#a7a5c4] mb-1">Aliases / Secondary Names (comma-separated)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Astris, The Sunken Spire, City of Tears"
+                      value={val("aliases")}
+                      onChange={(e) => setFormData({ ...formData, aliases: e.target.value })}
                       className="w-full px-3.5 py-2 rounded-lg bg-[#040612] border border-[#232b50] text-sm text-[#faf8f2] focus:outline-none focus:border-[#fae48f]"
                     />
                   </div>
@@ -2586,6 +2967,41 @@ function UniverseWorkspaceContent() {
                 className="px-4 py-2 rounded-lg bg-rose-900/60 border border-rose-500/60 text-xs font-mono uppercase text-rose-200 hover:bg-rose-900"
               >
                 {isSubmitting ? "Dissolving..." : "Confirm Dissolution"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DISSOLVE ENTIRE UNIVERSE CONFIRMATION MODAL */}
+      {isDissolveUniverseOpen && universe && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-md bg-[#090c21] border border-rose-500/50 rounded-xl shadow-2xl p-6 text-[#dedbd2]">
+            <div className="flex items-center gap-2.5 text-rose-400 mb-3">
+              <AlertTriangle className="w-5 h-5 text-rose-400" />
+              <h3 className="font-cinzel text-lg font-bold text-[#faf8f2]">
+                Dissolve Entire Universe?
+              </h3>
+            </div>
+            <p className="font-cormorant text-sm text-[#b8b5cc] leading-relaxed mb-6">
+              Are you certain you wish to dissolve &ldquo;{universe.title}&rdquo;? This will permanently eradicate this universe, all characters, locations, events, chapters, and causal connections from the canon. This action cannot be reversed.
+            </p>
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsDissolveUniverseOpen(false)}
+                className="px-4 py-2 text-xs font-mono uppercase text-[#8b89ad] hover:text-white cursor-pointer"
+              >
+                Retain Universe
+              </button>
+              <button
+                type="button"
+                onClick={handleDissolveUniverseConfirm}
+                disabled={isDissolvingUniverse}
+                className="px-4 py-2 rounded-lg bg-rose-900/70 border border-rose-500/70 text-xs font-mono uppercase text-rose-200 hover:bg-rose-900 transition-colors cursor-pointer"
+              >
+                {isDissolvingUniverse ? "Dissolving Universe..." : "Confirm Dissolution"}
               </button>
             </div>
           </div>

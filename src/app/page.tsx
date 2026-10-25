@@ -6,9 +6,7 @@ import { CinematicEntrance } from "@/components/ui/CinematicEntrance";
 import { UniverseLauncherModal } from "@/components/ui/UniverseLauncherModal";
 import { Navbar } from "@/components/ui/Navbar";
 import { Hero } from "@/components/ui/Hero";
-import { NexusExplorer } from "@/components/ui/NexusExplorer";
 import { PillarsShowcase } from "@/components/ui/PillarsShowcase";
-import { ContinuityOracleDemo } from "@/components/ui/ContinuityOracleDemo";
 import { ClosingCTA } from "@/components/ui/ClosingCTA";
 import { Footer } from "@/components/ui/Footer";
 
@@ -26,7 +24,7 @@ export default function Home() {
   };
 
   const handleDiscoverOracle = () => {
-    const el = document.getElementById("continuity-oracle");
+    const el = document.getElementById("world-pillars");
     if (el) {
       el.scrollIntoView({ behavior: "smooth" });
     }
@@ -63,14 +61,8 @@ export default function Home() {
           onDiscoverOracle={handleDiscoverOracle}
         />
 
-        {/* Interactive Interconnected Nexus */}
-        <NexusExplorer />
-
         {/* The Four Core Pillars */}
         <PillarsShowcase />
-
-        {/* Interactive Continuity Oracle Simulator */}
-        <ContinuityOracleDemo />
 
         {/* Closing Celestial Portal Call-to-Action */}
         <ClosingCTA onOpenUniverseModal={handleOpenUniverseModal} />

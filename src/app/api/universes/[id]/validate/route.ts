@@ -23,7 +23,7 @@ export async function GET(
     return NextResponse.json({ findings });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch continuity findings';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -41,7 +41,7 @@ export async function POST(
     return NextResponse.json(result);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Continuity scan execution failed';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }

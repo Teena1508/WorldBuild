@@ -46,7 +46,7 @@ export async function PUT(
     return NextResponse.json({ relationship: updated.rows[0] });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to update relationship';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -72,7 +72,7 @@ export async function DELETE(
     return NextResponse.json({ success: true, deletedRelationshipId: relationshipId });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to delete relationship';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }

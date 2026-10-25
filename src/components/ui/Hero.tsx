@@ -1,8 +1,7 @@
-"use client";
-
-import React from "react";
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { Compass, Eye, Sparkles, BookOpen, ChevronDown, ShieldCheck, Layers, GitBranch } from "lucide-react";
+import { Compass, Eye, Sparkles, BookOpen, ChevronDown, UserPlus, Lock } from "lucide-react";
 import { CelestialAstrolabe } from "./CelestialAstrolabe";
 
 interface HeroProps {
@@ -11,6 +10,18 @@ interface HeroProps {
 }
 
 export function Hero({ onEnterArchive, onDiscoverOracle }: HeroProps) {
+  void onEnterArchive;
+  const [currentUser, setCurrentUser] = useState<{ id: string; display_name: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user) setCurrentUser(data.user);
+      })
+      .catch(() => {});
+  }, []);
+
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -64,30 +75,84 @@ export function Hero({ onEnterArchive, onDiscoverOracle }: HeroProps) {
         </motion.p>
 
         {/* Primary and Secondary CTAs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.65 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto"
-        >
-          <button
-            onClick={onEnterArchive}
-            id="hero-enter-archive-btn"
-            className="gold-glow-button w-full sm:w-auto px-8 py-4 rounded-full text-xs font-mono tracking-[0.2em] uppercase font-semibold text-[#fae48f] flex items-center justify-center gap-3 cursor-pointer group"
+        {!currentUser ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.65 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto"
           >
-            <Compass className="w-4 h-4 text-[#fae48f] group-hover:rotate-45 transition-transform duration-500" />
-            <span>Enter the Archive</span>
-          </button>
+            <Link
+              href="/login?tab=signup"
+              id="hero-signup-btn"
+              className="gold-glow-button w-full sm:w-auto px-8 py-4 rounded-full text-xs font-mono tracking-[0.2em] uppercase font-semibold text-[#fae48f] flex items-center justify-center gap-3 cursor-pointer group"
+            >
+              <UserPlus className="w-4 h-4 text-[#fae48f]" />
+              <span>Sign Up</span>
+            </Link>
 
-          <button
-            onClick={onDiscoverOracle}
-            id="hero-discover-oracle-btn"
-            className="w-full sm:w-auto px-7 py-4 rounded-full text-xs font-mono tracking-[0.2em] uppercase font-medium text-[#c9c7e0] border border-[#2b355d] bg-[#0c1024]/70 hover:border-[#fae48f]/50 hover:text-white hover:bg-[#141b38] backdrop-blur-md transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            <Link
+              href="/login?tab=signin"
+              id="hero-login-btn"
+              className="w-full sm:w-auto px-7 py-4 rounded-full text-xs font-mono tracking-[0.2em] uppercase font-medium text-[#c9c7e0] border border-[#2b355d] bg-[#0c1024]/70 hover:border-[#fae48f]/50 hover:text-white hover:bg-[#141b38] backdrop-blur-md transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <Lock className="w-4 h-4 text-[#d4af37]" />
+              <span>Log In</span>
+            </Link>
+
+            <Link
+              href="/login?redirect=/studio"
+              id="hero-start-writing-btn"
+              className="w-full sm:w-auto px-7 py-4 rounded-full text-xs font-mono tracking-[0.2em] uppercase font-medium text-[#fae48f] border border-[#d4af37]/40 bg-[#0d122c]/80 hover:border-[#fae48f] hover:bg-[#151c3d] backdrop-blur-md transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <BookOpen className="w-4 h-4 text-[#d4af37]" />
+              <span>Start Writing</span>
+            </Link>
+
+            <Link
+              href="/vault"
+              id="hero-enter-vault-guest-btn"
+              className="w-full sm:w-auto px-7 py-4 rounded-full text-xs font-mono tracking-[0.2em] uppercase font-medium text-[#c9c7e0] border border-[#2b355d] bg-[#0c1024]/70 hover:border-[#fae48f]/50 hover:text-white hover:bg-[#141b38] backdrop-blur-md transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <Compass className="w-4 h-4 text-[#d4af37]" />
+              <span>Enter World Vault</span>
+            </Link>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.65 }}
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto"
           >
-            <Eye className="w-4 h-4 text-[#d4af37]" />
-            <span>Discover the Oracle</span>
-          </button>
-        </motion.div>
+            <Link
+              href="/vault"
+              id="hero-enter-vault-btn"
+              className="gold-glow-button w-full sm:w-auto px-8 py-4 rounded-full text-xs font-mono tracking-[0.2em] uppercase font-semibold text-[#fae48f] flex items-center justify-center gap-3 cursor-pointer group"
+            >
+              <Compass className="w-4 h-4 text-[#fae48f] group-hover:rotate-45 transition-transform duration-500" />
+              <span>Enter World Vault</span>
+            </Link>
+
+            <Link
+              href="/studio"
+              id="hero-story-studio-btn"
+              className="w-full sm:w-auto px-7 py-4 rounded-full text-xs font-mono tracking-[0.2em] uppercase font-medium text-[#fae48f] border border-[#d4af37]/40 bg-[#0d122c]/80 hover:border-[#fae48f] hover:bg-[#151c3d] backdrop-blur-md transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <BookOpen className="w-4 h-4 text-[#d4af37]" />
+              <span>Story Studio</span>
+            </Link>
+
+            <button
+              onClick={onDiscoverOracle}
+              id="hero-discover-oracle-btn"
+              className="w-full sm:w-auto px-7 py-4 rounded-full text-xs font-mono tracking-[0.2em] uppercase font-medium text-[#c9c7e0] border border-[#2b355d] bg-[#0c1024]/70 hover:border-[#fae48f]/50 hover:text-white hover:bg-[#141b38] backdrop-blur-md transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+            >
+              <Eye className="w-4 h-4 text-[#d4af37]" />
+              <span>Discover the Oracle</span>
+            </button>
+          </motion.div>
+        )}
 
         {/* Subtext under CTAs */}
         <motion.p
@@ -100,70 +165,16 @@ export function Hero({ onEnterArchive, onDiscoverOracle }: HeroProps) {
         </motion.p>
       </div>
 
-      {/* Telemetry / Live Canon Metrics Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.9 }}
-        className="relative z-10 max-w-6xl mx-auto w-full mt-12 pt-8 border-t border-[#1a213b]"
-      >
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          <div className="p-3 rounded-lg border border-[#1b223d]/60 bg-[#080c1d]/40 backdrop-blur-sm">
-            <div className="flex items-center justify-center gap-1.5 text-xs font-mono text-[#8786a3] uppercase mb-1">
-              <Layers className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>Interlinked Entities</span>
-            </div>
-            <div className="font-cinzel text-xl sm:text-2xl font-bold text-[#fae48f]">
-              1,482+
-            </div>
-            <div className="text-[10px] font-mono text-[#6c6a88]">Characters, Relics, Spatials</div>
-          </div>
-
-          <div className="p-3 rounded-lg border border-[#1b223d]/60 bg-[#080c1d]/40 backdrop-blur-sm">
-            <div className="flex items-center justify-center gap-1.5 text-xs font-mono text-[#8786a3] uppercase mb-1">
-              <GitBranch className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>Chronology Strands</span>
-            </div>
-            <div className="font-cinzel text-xl sm:text-2xl font-bold text-[#f0ede4]">
-              4 Parallel Eras
-            </div>
-            <div className="text-[10px] font-mono text-[#6c6a88]">Synchronized Timeline Layers</div>
-          </div>
-
-          <div className="p-3 rounded-lg border border-[#1b223d]/60 bg-[#080c1d]/40 backdrop-blur-sm">
-            <div className="flex items-center justify-center gap-1.5 text-xs font-mono text-[#8786a3] uppercase mb-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>Causal Integrity</span>
-            </div>
-            <div className="font-cinzel text-xl sm:text-2xl font-bold text-[#72e8a6]">
-              99.8%
-            </div>
-            <div className="text-[10px] font-mono text-[#6c6a88]">Paradox Defense Rate</div>
-          </div>
-
-          <div className="p-3 rounded-lg border border-[#1b223d]/60 bg-[#080c1d]/40 backdrop-blur-sm">
-            <div className="flex items-center justify-center gap-1.5 text-xs font-mono text-[#8786a3] uppercase mb-1">
-              <BookOpen className="w-3.5 h-3.5 text-[#d4af37]" />
-              <span>Lore Vault Capacity</span>
-            </div>
-            <div className="font-cinzel text-xl sm:text-2xl font-bold text-[#d1ceea]">
-              Infinite
-            </div>
-            <div className="text-[10px] font-mono text-[#6c6a88]">Uncapped Interconnected Worlds</div>
-          </div>
-        </div>
-
-        {/* Scroll down indicator */}
-        <div className="flex justify-center mt-6">
-          <button
-            onClick={() => scrollTo("archive-nexus")}
-            aria-label="Scroll to Nexus"
-            className="text-[#7d7a9b] hover:text-[#fae48f] transition-colors p-1.5 animate-bounce cursor-pointer"
-          >
-            <ChevronDown className="w-5 h-5" />
-          </button>
-        </div>
-      </motion.div>
+      {/* Scroll down indicator */}
+      <div className="relative z-10 flex justify-center mt-12">
+        <button
+          onClick={() => scrollTo("world-pillars")}
+          aria-label="Scroll to Pillars"
+          className="text-[#7d7a9b] hover:text-[#fae48f] transition-colors p-1.5 animate-bounce cursor-pointer"
+        >
+          <ChevronDown className="w-5 h-5" />
+        </button>
+      </div>
     </section>
   );
 }

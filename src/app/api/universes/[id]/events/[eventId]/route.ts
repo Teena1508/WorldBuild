@@ -95,17 +95,30 @@ export async function GET(
       [eventId]
     );
 
+    // Chapter references and evidence
+    const chapterLinksRes = await query(
+      `SELECT cel.*, ch.title as chapter_title, ch.sequence_number as chapter_sequence
+       FROM chapter_entity_links cel
+       JOIN chapters ch ON cel.chapter_id = ch.id
+       WHERE (cel.event_id = $1 OR (cel.entity_type = 'event' AND LOWER(cel.entity_name) = LOWER($2)) OR ch.id = $3)
+         AND cel.universe_id = $4
+         AND cel.status != 'dismissed'
+       ORDER BY ch.sequence_number ASC`,
+      [eventId, event.title, event.chapter_id || '', universeId]
+    );
+
     return NextResponse.json({
       event: {
         ...event,
         participants: partsRes.rows,
         dependencies: depsRes.rows,
         secret_usages: secretsRes.rows,
+        chapter_links: chapterLinksRes.rows,
       },
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch event';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -215,7 +228,9 @@ export async function PUT(
     return NextResponse.json({ event: updatedEvent });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to update event';
-    const status = message.includes('does not belong') || message.includes('cycle') || message.includes('Duplicate') || message.includes('cannot depend')
+    const status = message.includes('Authentication')
+      ? 401
+      : (message.includes('does not belong') || message.includes('cycle') || message.includes('Duplicate') || message.includes('cannot depend'))
       ? 400
       : message.includes('not found') ? 404 : 403;
     return NextResponse.json({ error: message }, { status });
@@ -243,7 +258,7 @@ export async function DELETE(
     return NextResponse.json({ success: true, deletedEventId: eventId });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to delete event';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }

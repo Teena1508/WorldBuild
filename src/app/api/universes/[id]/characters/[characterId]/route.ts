@@ -78,15 +78,56 @@ export async function GET(
       [characterId, universeId]
     );
 
+    // Chapter Appearances & Mentions with associated locations and events
+    const appearancesRes = await query(
+      `SELECT cel.*,
+        ch.title as chapter_title,
+        ch.sequence_number as chapter_sequence
+       FROM chapter_entity_links cel
+       JOIN chapters ch ON cel.chapter_id = ch.id
+       WHERE (cel.character_id = $1 OR (cel.entity_type = 'character' AND LOWER(cel.entity_name) = LOWER($2)))
+         AND cel.universe_id = $3
+         AND cel.status != 'dismissed'
+       ORDER BY ch.sequence_number ASC`,
+      [characterId, character.name, universeId]
+    );
+
+    const chapterAppearances = await Promise.all(
+      appearancesRes.rows.map(async (appRow: unknown) => {
+        const row = appRow as Record<string, unknown>;
+        const chapId = row.chapter_id as string;
+        // Associated locations in this chapter
+        const locs = await query(
+          `SELECT location_id, entity_name, entity_name as name, relationship_type
+           FROM chapter_entity_links
+           WHERE chapter_id = $1 AND entity_type = 'location' AND status != 'dismissed'`,
+          [chapId]
+        );
+        // Associated events in this chapter
+        const evs = await query(
+          `SELECT id, title, timestamp_year
+           FROM events
+           WHERE chapter_id = $1 AND universe_id = $2`,
+          [chapId, universeId]
+        );
+        return {
+          ...row,
+          associated_locations: locs.rows,
+          associated_events: evs.rows,
+        };
+      })
+    );
+
     return NextResponse.json({
       character,
       events: eventsRes.rows,
       relationships: relsRes.rows,
       secrets: secretsRes.rows,
+      chapter_appearances: chapterAppearances,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch character';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -109,6 +150,7 @@ export async function PUT(
     const deathConfirmed = body.death_confirmed !== undefined ? Boolean(body.death_confirmed) : undefined;
     const deathExceptionNotes = body.death_exception_notes !== undefined ? body.death_exception_notes?.trim() || null : undefined;
     const status = body.status?.trim();
+    const aliases = body.aliases !== undefined ? body.aliases.trim() : undefined;
 
     if (!name || name.length === 0) {
       return NextResponse.json({ error: 'Character name is required' }, { status: 400 });
@@ -142,9 +184,10 @@ export async function PUT(
            death_confirmed = COALESCE($6, death_confirmed),
            death_exception_notes = $7,
            status = COALESCE($8, status),
+           aliases = COALESCE($9, aliases),
            updated_at = NOW()
-       WHERE id = $9 AND universe_id = $10`,
-      [name, epithet, bio, birthYear, deathYear, deathConfirmed, deathExceptionNotes, status, characterId, universeId]
+       WHERE id = $10 AND universe_id = $11`,
+      [name, epithet, bio, birthYear, deathYear, deathConfirmed, deathExceptionNotes, status, aliases, characterId, universeId]
     );
 
     const updated = await query<Character>(
@@ -159,7 +202,7 @@ export async function PUT(
     return NextResponse.json({ character: updated.rows[0] });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to update character';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -185,7 +228,7 @@ export async function DELETE(
     return NextResponse.json({ success: true, deletedCharacterId: characterId });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to delete character';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }

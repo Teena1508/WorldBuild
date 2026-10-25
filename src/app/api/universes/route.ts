@@ -1,18 +1,47 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { query } from '@/lib/db';
-import { getCurrentUser } from '@/lib/auth/session';
+import { getCurrentUser, getOptionalCurrentUser, AuthenticationError } from '@/lib/auth/session';
 import { Universe } from '@/lib/db/types';
+
+interface UniverseRow {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  cover_url: string | null;
+  is_example: boolean;
+  created_at: string;
+  updated_at: string;
+  char_count: number;
+  loc_count: number;
+  chap_count: number;
+  event_count: number;
+  rel_count: number;
+  sec_count: number;
+  open_findings_count: number;
+}
 
 export async function GET(request: Request) {
   try {
-    const user = await getCurrentUser(request);
+    const user = await getOptionalCurrentUser(request);
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('q')?.trim().toLowerCase();
     const scope = searchParams.get('scope')?.trim().toLowerCase();
 
-    let whereClause = '(u.user_id = $1 OR u.is_example = true)';
-    if (scope === 'personal') {
+    // If scope is explicitly personal and user is not authenticated, reject
+    if (scope === 'personal' && !user) {
+      return NextResponse.json(
+        { error: 'Authentication required to view personal universes' },
+        { status: 401 }
+      );
+    }
+
+    let whereClause = user
+      ? '(u.user_id = $1 OR u.is_example = true)'
+      : 'u.is_example = true';
+
+    if (scope === 'personal' && user) {
       whereClause = '(u.user_id = $1 AND u.is_example = false)';
     } else if (scope === 'demo') {
       whereClause = 'u.is_example = true';
@@ -31,7 +60,10 @@ export async function GET(request: Request) {
       WHERE ${whereClause}
     `;
 
-    const params: unknown[] = [user.id];
+    const params: unknown[] = [];
+    if (user && whereClause.includes('$1')) {
+      params.push(user.id);
+    }
 
     if (search) {
       params.push(`%${search}%`);
@@ -39,24 +71,6 @@ export async function GET(request: Request) {
     }
 
     sql += ` ORDER BY u.is_example DESC, u.updated_at DESC`;
-
-    interface UniverseRow {
-      id: string;
-      user_id: string;
-      title: string;
-      description: string;
-      cover_url: string | null;
-      is_example: boolean;
-      created_at: string;
-      updated_at: string;
-      char_count: number;
-      loc_count: number;
-      chap_count: number;
-      event_count: number;
-      rel_count: number;
-      sec_count: number;
-      open_findings_count: number;
-    }
 
     const res = await query<UniverseRow>(sql, params);
 
@@ -80,16 +94,20 @@ export async function GET(request: Request) {
       },
     }));
 
-    const personalUniverses = universes.filter((u) => !u.is_example && u.user_id === user.id);
+    const personalUniverses = user
+      ? universes.filter((u) => !u.is_example && u.user_id === user.id)
+      : [];
     const demoUniverses = universes.filter((u) => u.is_example);
     const demoUniverse = demoUniverses[0] || null;
 
     return NextResponse.json({
-      user: {
-        id: user.id,
-        displayName: user.display_name,
-        email: user.email,
-      },
+      user: user
+        ? {
+            id: user.id,
+            displayName: user.display_name,
+            email: user.email,
+          }
+        : null,
       universes,
       personalUniverses,
       demoUniverse,
@@ -100,6 +118,9 @@ export async function GET(request: Request) {
       },
     });
   } catch (error: unknown) {
+    if (error instanceof AuthenticationError) {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : 'Failed to fetch universes';
     console.error('Error fetching universes:', error);
     return NextResponse.json({ error: message }, { status: 500 });
@@ -164,11 +185,14 @@ export async function POST(request: Request) {
       },
     }, { status: 201 });
   } catch (error: unknown) {
+    if (error instanceof AuthenticationError) {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
     const message = error instanceof Error ? error.message : 'Failed to create universe';
     console.error('Error creating universe:', error);
     return NextResponse.json(
       { error: message },
-      { status: 500 }
+      { status: message.includes('Authentication') ? 401 : 500 }
     );
   }
 }

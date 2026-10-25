@@ -63,14 +63,55 @@ export async function GET(
       [locationId, universeId]
     );
 
+    // Chapter Appearances & Mentions with associated characters and events
+    const appearancesRes = await query(
+      `SELECT cel.*,
+        ch.title as chapter_title,
+        ch.sequence_number as chapter_sequence
+       FROM chapter_entity_links cel
+       JOIN chapters ch ON cel.chapter_id = ch.id
+       WHERE (cel.location_id = $1 OR (cel.entity_type = 'location' AND LOWER(cel.entity_name) = LOWER($2)))
+         AND cel.universe_id = $3
+         AND cel.status != 'dismissed'
+       ORDER BY ch.sequence_number ASC`,
+      [locationId, location.name, universeId]
+    );
+
+    const chapterAppearances = await Promise.all(
+      appearancesRes.rows.map(async (appRow: unknown) => {
+        const row = appRow as Record<string, unknown>;
+        const chapId = row.chapter_id as string;
+        // Associated characters in this chapter scene
+        const chars = await query(
+          `SELECT character_id, entity_name, entity_name as name, relationship_type
+           FROM chapter_entity_links
+           WHERE chapter_id = $1 AND entity_type = 'character' AND status != 'dismissed'`,
+          [chapId]
+        );
+        // Associated events in this chapter
+        const evs = await query(
+          `SELECT id, title, timestamp_year
+           FROM events
+           WHERE chapter_id = $1 AND universe_id = $2`,
+          [chapId, universeId]
+        );
+        return {
+          ...row,
+          associated_characters: chars.rows,
+          associated_events: evs.rows,
+        };
+      })
+    );
+
     return NextResponse.json({
       location,
       events: eventsRes.rows,
       present_characters: presentCharsRes.rows,
+      chapter_appearances: chapterAppearances,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch location';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -90,6 +131,7 @@ export async function PUT(
     const description = body.description?.trim();
     const coordinatesX = body.coordinates_x !== undefined && body.coordinates_x !== null && body.coordinates_x !== '' ? Number(body.coordinates_x) : null;
     const coordinatesY = body.coordinates_y !== undefined && body.coordinates_y !== null && body.coordinates_y !== '' ? Number(body.coordinates_y) : null;
+    const aliases = body.aliases !== undefined ? body.aliases.trim() : undefined;
 
     if (!name || name.length === 0) {
       return NextResponse.json({ error: 'Location name is required' }, { status: 400 });
@@ -113,9 +155,11 @@ export async function PUT(
     await query(
       `UPDATE locations
        SET name = $1, realm = COALESCE($2, realm), description = $3,
-           coordinates_x = $4, coordinates_y = $5, updated_at = NOW()
-       WHERE id = $6 AND universe_id = $7`,
-      [name, realm, description, coordinatesX, coordinatesY, locationId, universeId]
+           coordinates_x = $4, coordinates_y = $5,
+           aliases = COALESCE($6, aliases),
+           updated_at = NOW()
+       WHERE id = $7 AND universe_id = $8`,
+      [name, realm, description, coordinatesX, coordinatesY, aliases, locationId, universeId]
     );
 
     const updated = await query<Location>(
@@ -130,7 +174,7 @@ export async function PUT(
     return NextResponse.json({ location: updated.rows[0] });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to update location';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -156,7 +200,7 @@ export async function DELETE(
     return NextResponse.json({ success: true, deletedLocationId: locationId });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to delete location';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.includes('Authentication') ? 401 : (message.includes('not found') ? 404 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }

@@ -58,3 +58,18 @@ Tables:
 - `npm test`: Run automated tests (`tsx --test tests/**/*.test.ts`)
 - `npm run lint`: Run ESLint verification
 - `npm run build`: Build production Next.js application
+
+---
+
+## Story Studio & Offline Local AI
+
+WORLDBUILD includes a dedicated **Story Studio** workspace for distraction-free chapter writing and canon-aware plot-hole detection powered by local AI (Ollama).
+
+- **100% Offline & Private**: Zero cloud AI APIs, zero third-party telemetry, and zero manuscript data sent across the internet.
+- **Persistent Manuscript Editor**: Debounced autosave, optimistic concurrency version protection, and chapter reordering.
+- **Hybrid Continuity Oracle**:
+  - **Deterministic Rules**: Post-mortem character appearances and premature secret exposures verified against PostgreSQL canon.
+  - **Local Narrative AI**: Local Ollama runtime (`llama3.2`, `mistral`, `llama3:8b`, etc.) detects character knowledge gaps, unexplained object transfers, and spatial inconsistencies.
+- **Author Control**: Authors can accept suggested fixes, dismiss findings with intentional narrative reasons (e.g. "Unreliable narrator", "Deliberate paradox"), or mark findings resolved.
+- **Setup Guide**: See [docs/LOCAL_AI_SETUP.md](docs/LOCAL_AI_SETUP.md) for step-by-step instructions.
+

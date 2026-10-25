@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
 import { query, transaction } from '@/lib/db';
-import { getCurrentUser, verifyUniverseAccess } from '@/lib/auth/session';
+import {
+  getCurrentUser,
+  getOptionalCurrentUser,
+  verifyUniverseAccess,
+  AuthenticationError,
+  ForbiddenError,
+  NotFoundError,
+} from '@/lib/auth/session';
 import { Universe } from '@/lib/db/types';
 
 export async function GET(
@@ -9,8 +16,8 @@ export async function GET(
 ) {
   try {
     const { id: universeId } = await props.params;
-    const user = await getCurrentUser(request);
-    const universe = await verifyUniverseAccess(universeId, user.id, 'read');
+    const user = await getOptionalCurrentUser(request);
+    const universe = await verifyUniverseAccess(universeId, user ? user.id : null, 'read');
 
     interface StatsRow {
       char_count: number;
@@ -60,11 +67,20 @@ export async function GET(
 
     return NextResponse.json({
       universe: populatedUniverse,
-      isOwner: Boolean(!universe.is_example && universe.user_id === user.id),
+      isOwner: Boolean(user && !universe.is_example && universe.user_id === user.id),
     });
   } catch (error: unknown) {
+    if (error instanceof AuthenticationError) {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    if (error instanceof ForbiddenError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    if (error instanceof NotFoundError) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
     const message = error instanceof Error ? error.message : 'Error fetching universe';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.toLowerCase().includes('not found') ? 404 : (message.toLowerCase().includes('authentication') ? 401 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -100,16 +116,25 @@ export async function PUT(
     await query(
       `UPDATE universes
        SET title = $1, description = $2, cover_url = $3, updated_at = NOW()
-       WHERE id = $4`,
-      [title, description, coverUrl, universeId]
+       WHERE id = $4 AND user_id = $5`,
+      [title, description, coverUrl, universeId, user.id]
     );
 
     const updated = await query<Universe>('SELECT * FROM universes WHERE id = $1', [universeId]);
 
     return NextResponse.json({ universe: updated.rows[0] });
   } catch (error: unknown) {
+    if (error instanceof AuthenticationError) {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    if (error instanceof ForbiddenError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    if (error instanceof NotFoundError) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
     const message = error instanceof Error ? error.message : 'Failed to update universe';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.toLowerCase().includes('not found') ? 404 : (message.toLowerCase().includes('authentication') ? 401 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
@@ -131,13 +156,31 @@ export async function DELETE(
     }
 
     await transaction(async (tx) => {
+      await tx.query('DELETE FROM continuity_findings WHERE universe_id = $1', [universeId]);
+      await tx.query('DELETE FROM chapter_entity_links WHERE universe_id = $1', [universeId]);
+      await tx.query('DELETE FROM story_universes WHERE universe_id = $1', [universeId]);
+      await tx.query('DELETE FROM secrets WHERE universe_id = $1', [universeId]);
+      await tx.query('DELETE FROM relationships WHERE universe_id = $1', [universeId]);
+      await tx.query('DELETE FROM events WHERE universe_id = $1', [universeId]);
+      await tx.query('DELETE FROM chapters WHERE universe_id = $1', [universeId]);
+      await tx.query('DELETE FROM locations WHERE universe_id = $1', [universeId]);
+      await tx.query('DELETE FROM characters WHERE universe_id = $1', [universeId]);
       await tx.query('DELETE FROM universes WHERE id = $1', [universeId]);
     });
 
     return NextResponse.json({ success: true, deletedUniverseId: universeId });
   } catch (error: unknown) {
+    if (error instanceof AuthenticationError) {
+      return NextResponse.json({ error: error.message }, { status: 401 });
+    }
+    if (error instanceof ForbiddenError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    if (error instanceof NotFoundError) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
     const message = error instanceof Error ? error.message : 'Failed to delete universe';
-    const status = message.includes('not found') ? 404 : 403;
+    const status = message.toLowerCase().includes('not found') ? 404 : (message.toLowerCase().includes('authentication') ? 401 : 403);
     return NextResponse.json({ error: message }, { status });
   }
 }
