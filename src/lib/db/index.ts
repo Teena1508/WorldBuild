@@ -61,9 +61,15 @@ async function getPgliteInstance(): Promise<PGlite> {
         // ignore
       }
     }
+
+    const tryInit = async (): Promise<PGlite> => {
+      const instance = new PGlite(dataDir);
+      await instance.waitReady;
+      return instance;
+    };
+
     try {
-      globalPglite = new PGlite(dataDir);
-      await globalPglite.waitReady;
+      globalPglite = await tryInit();
     } catch (startErr: unknown) {
       console.warn('Initial PGlite connection attempt note:', startErr);
       if (fs.existsSync(pidFile)) {
@@ -73,8 +79,30 @@ async function getPgliteInstance(): Promise<PGlite> {
           // ignore
         }
       }
-      globalPglite = new PGlite(dataDir);
-      await globalPglite.waitReady;
+
+      try {
+        globalPglite = await tryInit();
+      } catch (retryErr: unknown) {
+        if (dataDir === 'memory://') {
+          throw retryErr;
+        }
+
+        console.warn('PGlite data directory is corrupted or unrecoverable. Performing automatic safety backup and fresh recovery...');
+        const corruptBackup = path.resolve(process.cwd(), `.data/postgres_corrupted_${Date.now()}`);
+        try {
+          if (fs.existsSync(dataDir)) {
+            fs.renameSync(dataDir, corruptBackup);
+          }
+          fs.mkdirSync(dataDir, { recursive: true });
+        } catch (backupErr) {
+          console.error('Failed to move corrupted PGlite data directory:', backupErr);
+          throw retryErr;
+        }
+
+        cachedAppliedMigrations = null;
+        globalPglite = await tryInit();
+        console.info(`PGlite successfully recovered fresh database. Previous corrupted data preserved at ${corruptBackup}`);
+      }
     }
   }
   return globalPglite;
