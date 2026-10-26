@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Compass, Eye, BookMarked, Menu, X, ArrowUpRight, Feather } from "lucide-react";
+import { Sparkles, Compass, Eye, BookMarked, Menu, X, ArrowUpRight, Feather, Search } from "lucide-react";
 
 interface NavbarProps {
   onOpenUniverseModal: () => void;
@@ -14,6 +14,7 @@ export function Navbar({ onOpenUniverseModal, onReplayPrologue }: NavbarProps) {
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [navSearchQuery, setNavSearchQuery] = useState("");
 
   const [currentUser, setCurrentUser] = useState<{ id: string; display_name: string } | null>(null);
 
@@ -90,6 +91,14 @@ export function Navbar({ onOpenUniverseModal, onReplayPrologue }: NavbarProps) {
               <span>Story Studio</span>
             </Link>
 
+            <Link
+              href="/publish"
+              className="text-xs font-mono tracking-widest uppercase text-[#fae48f] hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer font-semibold"
+            >
+              <BookMarked className="w-3.5 h-3.5 text-[#d4af37]" />
+              <span>Library</span>
+            </Link>
+
             <button
               onClick={() => scrollTo("world-pillars")}
               className="text-xs font-mono tracking-widest uppercase text-[#9e9cb8] hover:text-[#fae48f] transition-colors flex items-center gap-1.5 cursor-pointer"
@@ -98,6 +107,28 @@ export function Navbar({ onOpenUniverseModal, onReplayPrologue }: NavbarProps) {
               <span>The Oracle</span>
             </button>
           </nav>
+
+          {/* Quick Search Bar to find books of other authors */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (navSearchQuery.trim()) {
+                router.push(`/publish?q=${encodeURIComponent(navSearchQuery.trim())}`);
+              } else {
+                router.push("/publish");
+              }
+            }}
+            className="hidden lg:flex items-center relative"
+          >
+            <Search className="w-3.5 h-3.5 absolute left-3 text-[#7e7c99] pointer-events-none" />
+            <input
+              type="text"
+              value={navSearchQuery}
+              onChange={(e) => setNavSearchQuery(e.target.value)}
+              placeholder="Find books & authors..."
+              className="pl-8 pr-3 py-1.5 rounded-full border border-[#212b50] bg-[#090d22]/90 focus:border-[#d4af37] focus:outline-none text-xs text-[#e0ddcf] placeholder-[#6b6988] w-44 focus:w-60 transition-all font-sans"
+            />
+          </form>
 
           {/* Right Action Area */}
           <div className="hidden md:flex items-center gap-3">
@@ -186,6 +217,28 @@ export function Navbar({ onOpenUniverseModal, onReplayPrologue }: NavbarProps) {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-[#202742] bg-[#070a17]/95 backdrop-blur-xl px-6 py-6 mt-3 space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setMobileMenuOpen(false);
+              if (navSearchQuery.trim()) {
+                router.push(`/publish?q=${encodeURIComponent(navSearchQuery.trim())}`);
+              } else {
+                router.push("/publish");
+              }
+            }}
+            className="relative"
+          >
+            <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-[#7e7c99] pointer-events-none" />
+            <input
+              type="text"
+              value={navSearchQuery}
+              onChange={(e) => setNavSearchQuery(e.target.value)}
+              placeholder="Search books & authors..."
+              className="w-full pl-9 pr-3 py-2 rounded-xl border border-[#212b50] bg-[#0c122b] focus:border-[#d4af37] focus:outline-none text-xs text-[#e0ddcf] placeholder-[#6b6988]"
+            />
+          </form>
+
           <Link
             href="/vault"
             onClick={() => setMobileMenuOpen(false)}
@@ -201,6 +254,14 @@ export function Navbar({ onOpenUniverseModal, onReplayPrologue }: NavbarProps) {
           >
             <span>Story Studio</span>
             <Feather className="w-4 h-4 text-[#d4af37]" />
+          </Link>
+          <Link
+            href="/publish"
+            onClick={() => setMobileMenuOpen(false)}
+            className="w-full text-left py-2 text-xs font-mono tracking-widest uppercase text-[#c7c5dd] hover:text-[#fae48f] flex items-center justify-between cursor-pointer"
+          >
+            <span>Published Library</span>
+            <BookMarked className="w-4 h-4 text-[#d4af37]" />
           </Link>
           <button
             onClick={() => scrollTo("world-pillars")}

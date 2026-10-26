@@ -13,8 +13,10 @@ import {
   RefreshCw,
   FolderPlus,
   Lock,
+  Globe,
 } from "lucide-react";
 import { ManuscriptImportModal } from "@/components/studio/ManuscriptImportModal";
+import { PublishingModal } from "@/components/studio/PublishingModal";
 
 export default function StudioPage() {
   const [stories, setStories] = useState<Story[]>([]);
@@ -22,6 +24,7 @@ export default function StudioPage() {
   const [selectedStoryId, setSelectedStoryId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isPublishingModalOpen, setIsPublishingModalOpen] = useState(false);
 
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string; display_name: string } | null>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
@@ -256,6 +259,19 @@ export default function StudioPage() {
                   ))}
                 </select>
               </div>
+            )}
+
+            {activeStory && !activeStory.is_example && (
+              <button
+                onClick={() => setIsPublishingModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-[#d4af37]/40 bg-[#0f1738] hover:bg-[#182354] hover:border-[#fae48f] text-xs font-mono uppercase tracking-wider text-[#fae48f] transition-all cursor-pointer font-bold shadow-[0_0_15px_rgba(212,175,55,0.2)]"
+              >
+                <Globe className="w-3.5 h-3.5 text-[#fae48f]" />
+                <span>Publishing Sanctum</span>
+                {activeStory.status === "published" && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+                )}
+              </button>
             )}
 
             <button
@@ -506,6 +522,21 @@ export default function StudioPage() {
             setSelectedStoryId(storyId);
           }}
         />
+
+        {/* Publishing Sanctum Modal */}
+        {activeStory && (
+          <PublishingModal
+            isOpen={isPublishingModalOpen}
+            onClose={() => setIsPublishingModalOpen(false)}
+            story={activeStory}
+            onStoryUpdated={async (updatedStory) => {
+              await fetchStudioData();
+              if (updatedStory?.id) {
+                setSelectedStoryId(updatedStory.id);
+              }
+            }}
+          />
+        )}
       </main>
     </div>
   );

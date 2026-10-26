@@ -29,6 +29,7 @@ import {
   MapPin,
   Calendar,
   X,
+  Globe,
 } from "lucide-react";
 import {
   Chapter,
@@ -40,6 +41,7 @@ import {
 } from "@/lib/db/types";
 import { ChapterAnalysisResult, OllamaStatus } from "@/lib/ai/types";
 import { ManuscriptImportModal } from "./ManuscriptImportModal";
+import { PublishingModal } from "./PublishingModal";
 
 interface StoryStudioProps {
   universe: Universe;
@@ -79,6 +81,58 @@ export function StoryStudio({
     message: string;
   } | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const normalizedStory = story || null;
+  const [currentStory, setCurrentStory] = useState<Story | null>(normalizedStory);
+  const [prevStory, setPrevStory] = useState<Story | null>(normalizedStory);
+  if (normalizedStory !== prevStory) {
+    setPrevStory(normalizedStory);
+    setCurrentStory(normalizedStory);
+  }
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [isResolvingStory, setIsResolvingStory] = useState(false);
+
+  const handleOpenPublishModal = async () => {
+    if (universe.is_example) {
+      alert("Canonical demo books are read-only and cannot be published directly. Please duplicate to create your personal author manuscript.");
+      return;
+    }
+    if (currentStory) {
+      setIsPublishModalOpen(true);
+      return;
+    }
+    setIsResolvingStory(true);
+    try {
+      const res = await fetch(`/api/stories?universe_id=${universe.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        const found = data.stories?.find((s: Story) => !s.is_example);
+        if (found) {
+          setCurrentStory(found);
+          setIsPublishModalOpen(true);
+          return;
+        }
+      }
+      // Auto-create a linked story record for this universe so the author can publish immediately
+      const createRes = await fetch("/api/stories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: universe.title,
+          description: universe.description || "",
+          universe_ids: [universe.id],
+        }),
+      });
+      if (createRes.ok) {
+        const createData = await createRes.json();
+        setCurrentStory(createData.story);
+        setIsPublishModalOpen(true);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsResolvingStory(false);
+    }
+  };
 
   const [prevInitialSelectedChapterId, setPrevInitialSelectedChapterId] = useState(initialSelectedChapterId);
   if (initialSelectedChapterId !== prevInitialSelectedChapterId) {
@@ -1173,6 +1227,31 @@ export function StoryStudio({
                 >
                   <Sparkles className={`w-3.5 h-3.5 ${isAnalyzing ? "animate-spin text-amber-300" : ""}`} />
                   <span>{isAnalyzing ? "Analyzing..." : "Analyze Chapter"}</span>
+                </button>
+
+                {/* Publish Chapter / Story Button - Top of Manuscript Editor */}
+                <button
+                  type="button"
+                  onClick={handleOpenPublishModal}
+                  disabled={universe.is_example || isResolvingStory}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-lg text-xs font-mono uppercase font-bold transition-all cursor-pointer shadow-[0_0_15px_rgba(212,175,55,0.25)] ${
+                    currentStory?.status === "published"
+                      ? "border border-emerald-500/50 bg-[#0d2127] hover:bg-[#143038] text-emerald-300"
+                      : "border border-[#d4af37]/60 bg-[#161c3d] hover:bg-[#202958] text-[#fae48f]"
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
+                  title={
+                    universe.is_example
+                      ? "Demo books cannot be published directly. Duplicate to create your own story."
+                      : "Publish chapter manuscript and story to the public library"
+                  }
+                >
+                  <Globe className="w-3.5 h-3.5 text-[#fae48f]" />
+                  <span>{isResolvingStory ? "Preparing..." : "Publish"}</span>
+                  {currentStory?.status === "published" ? (
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse ml-0.5" />
+                  ) : (
+                    <span className="text-[10px] opacity-75 font-normal ml-0.5">(Draft)</span>
+                  )}
                 </button>
               </div>
             </div>
@@ -2368,6 +2447,19 @@ export function StoryStudio({
         stories={stories}
         onImportComplete={handleImportComplete}
       />
+
+      {/* Publishing Modal */}
+      {currentStory && (
+        <PublishingModal
+          isOpen={isPublishModalOpen}
+          onClose={() => setIsPublishModalOpen(false)}
+          story={currentStory}
+          onStoryUpdated={(updatedStory) => {
+            setCurrentStory(updatedStory);
+            if (onUniverseRefresh) onUniverseRefresh();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -53,8 +53,11 @@ export interface Story {
   series_id: string | null;
   series_order: number | null;
   title: string;
+  slug?: string | null;
   description: string;
   cover_url: string | null;
+  genres?: string;
+  tags?: string;
   status: 'draft' | 'published' | 'archived';
   author_notes: string;
   is_example: boolean;
@@ -287,14 +290,19 @@ export interface PublishedStory {
   id: string;
   story_id: string;
   author_id: string;
+  slug: string;
   public_title: string;
   public_description: string;
   cover_url: string | null;
   genres: string;
   tags: string;
   status: 'published' | 'unpublished';
+  publication_version: number;
   published_at: string;
   updated_at: string;
+  author_pen_name?: string;
+  chapters_count?: number;
+  total_words?: number;
 }
 
 export interface PublishedChapterSnapshot {
@@ -306,6 +314,7 @@ export interface PublishedChapterSnapshot {
   content: string;
   word_count: number;
   version_number: number;
+  is_current: boolean;
   published_at: string;
 }
 

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#02030a"/>
+      <stop offset="30%" stop-color="#060c24"/>
+      <stop offset="60%" stop-color="#0b1744"/>
+      <stop offset="100%" stop-color="#02040d"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fae48f"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#8c6d1f"/>
+    </linearGradient>
+    <radialGradient id="nebulaCore" cx="50%" cy="45%" r="55%">
+      <stop offset="0%" stop-color="#e8a838" stop-opacity="0.4"/>
+      <stop offset="30%" stop-color="#4d248a" stop-opacity="0.35"/>
+      <stop offset="65%" stop-color="#142c6e" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="800" height="1200" fill="url(#bg)"/>
+  <circle cx="400" cy="500" r="450" fill="url(#nebulaCore)"/>
+
+  <!-- Ornate Borders -->
+  <rect x="40" y="40" width="720" height="1120" fill="none" stroke="url(#gold)" stroke-width="2"/>
+  <rect x="52" y="52" width="696" height="1096" fill="none" stroke="#d4af37" stroke-width="0.75" opacity="0.6"/>
+
+  <!-- Corner Filigree -->
+  <g stroke="url(#gold)" stroke-width="2" fill="none">
+    <path d="M 40 100 L 100 100 L 100 40"/>
+    <path d="M 760 100 L 700 100 L 700 40"/>
+    <path d="M 40 1100 L 100 1100 L 100 1160"/>
+    <path d="M 760 1100 L 700 1100 L 700 1160"/>
+  </g>
+
+  <!-- Orbital Rings with Tilt -->
+  <g stroke="url(#gold)" stroke-width="1.2" fill="none" opacity="0.45">
+    <ellipse cx="400" cy="500" rx="290" ry="110" transform="rotate(-25 400 500)"/>
+    <ellipse cx="400" cy="500" rx="250" ry="85" transform="rotate(-25 400 500)" stroke-dasharray="8 6"/>
+    <ellipse cx="400" cy="500" rx="330" ry="140" transform="rotate(-25 400 500)" stroke-dasharray="3 5"/>
+    <ellipse cx="400" cy="500" rx="200" ry="60" transform="rotate(35 400 500)"/>
+  </g>
+
+  <!-- Central Stellar Core -->
+  <circle cx="400" cy="500" r="75" fill="#04081c" stroke="url(#gold)" stroke-width="2"/>
+  <circle cx="400" cy="500" r="60" fill="#070e30" stroke="url(#gold)" stroke-width="1" stroke-dasharray="4 4"/>
+  <polygon points="400,430 415,485 470,500 415,515 400,570 385,515 330,500 385,485" fill="url(#gold)"/>
+
+  <!-- Satellite Moons -->
+  <circle cx="210" cy="400" r="14" fill="#0c163b" stroke="url(#gold)" stroke-width="1.5"/>
+  <circle cx="580" cy="620" r="20" fill="#120c2e" stroke="url(#gold)" stroke-width="1.5"/>
+  <circle cx="490" cy="360" r="8" fill="#1b285a" stroke="url(#gold)" stroke-width="1"/>
+
+  <!-- Seal -->
+  <circle cx="400" cy="980" r="42" fill="#070f2b" stroke="url(#gold)" stroke-width="2"/>
+  <polygon points="400,950 408,972 430,980 408,988 400,1010 392,988 370,980 392,972" fill="url(#gold)"/>
+</svg>

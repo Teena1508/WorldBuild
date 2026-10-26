@@ -28,6 +28,7 @@ import {
   Clock,
   Share2,
   Feather,
+  Globe,
 } from "lucide-react";
 import { StarfieldCanvas } from "@/components/ui/StarfieldCanvas";
 import { Universe, Character, Location, Chapter, UniverseEvent, Relationship, Secret, ContinuityFinding } from "@/lib/db/types";
@@ -1359,6 +1360,16 @@ function UniverseWorkspaceContent() {
                 >
                   <Feather className="w-3.5 h-3.5" />
                   <span>Open Story Studio</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab("studio");
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[#d4af37]/40 bg-[#12193b] text-xs font-mono tracking-wider uppercase text-[#fae48f] hover:bg-[#1c2759] transition-all cursor-pointer"
+                  title="Open Story Studio to Publish Chapters"
+                >
+                  <Globe className="w-3.5 h-3.5 text-[#fae48f]" />
+                  <span>Publish</span>
                 </button>
                 {universe.is_example ? (
                   <button

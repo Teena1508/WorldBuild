@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0714"/>
+      <stop offset="35%" stop-color="#160c2b"/>
+      <stop offset="70%" stop-color="#0e081c"/>
+      <stop offset="100%" stop-color="#05030a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fae48f"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#8c6d1f"/>
+    </linearGradient>
+    <radialGradient id="candle" cx="50%" cy="45%" r="45%">
+      <stop offset="0%" stop-color="#fae48f" stop-opacity="0.3"/>
+      <stop offset="60%" stop-color="#692b94" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="800" height="1200" fill="url(#bg)"/>
+  <circle cx="400" cy="500" r="380" fill="url(#candle)"/>
+
+  <!-- Ornate Archival Borders -->
+  <rect x="40" y="40" width="720" height="1120" fill="none" stroke="url(#gold)" stroke-width="2"/>
+  <rect x="52" y="52" width="696" height="1096" fill="none" stroke="#d4af37" stroke-width="0.75" opacity="0.6"/>
+
+  <!-- Corner Filigree -->
+  <g stroke="url(#gold)" stroke-width="2" fill="none">
+    <path d="M 40 100 L 100 100 L 100 40"/>
+    <path d="M 760 100 L 700 100 L 700 40"/>
+    <path d="M 40 1100 L 100 1100 L 100 1160"/>
+    <path d="M 760 1100 L 700 1100 L 700 1160"/>
+  </g>
+
+  <!-- Astrolabe Ring Matrix -->
+  <g stroke="url(#gold)" stroke-width="1" fill="none" opacity="0.4">
+    <circle cx="400" cy="480" r="280"/>
+    <circle cx="400" cy="480" r="230" stroke-dasharray="6 4"/>
+    <circle cx="400" cy="480" r="170"/>
+    <circle cx="400" cy="480" r="110" stroke-dasharray="3 3"/>
+  </g>
+
+  <!-- The Great Open Tome -->
+  <g fill="#0b0817" stroke="url(#gold)" stroke-width="2.5">
+    <!-- Left Page -->
+    <path d="M 400 680 C 330 650 240 650 180 670 L 180 430 C 240 410 330 410 400 440 Z"/>
+    <!-- Right Page -->
+    <path d="M 400 680 C 470 650 560 650 620 670 L 620 430 C 560 410 470 410 400 440 Z"/>
+    <!-- Spine -->
+    <line x1="400" y1="440" x2="400" y2="685" stroke-width="3"/>
+  </g>
+
+  <!-- Leyline Script on Pages -->
+  <g stroke="#fae48f" stroke-width="1.2" opacity="0.5" stroke-dasharray="14 6">
+    <line x1="210" y1="470" x2="370" y2="485"/>
+    <line x1="210" y1="510" x2="370" y2="525"/>
+    <line x1="210" y1="550" x2="370" y2="565"/>
+    <line x1="210" y1="590" x2="370" y2="605"/>
+    <line x1="210" y1="630" x2="370" y2="645"/>
+
+    <line x1="430" y1="485" x2="590" y2="470"/>
+    <line x1="430" y1="525" x2="590" y2="510"/>
+    <line x1="430" y1="565" x2="590" y2="550"/>
+    <line x1="430" y1="605" x2="590" y2="590"/>
+    <line x1="430" y1="645" x2="590" y2="630"/>
+  </g>
+
+  <!-- Glowing Feather / Quill -->
+  <g fill="url(#gold)" stroke="#fae48f" stroke-width="1">
+    <path d="M 400 430 C 400 320 430 250 490 200 C 470 240 450 290 440 350 C 440 400 410 440 400 470 Z"/>
+    <line x1="400" y1="470" x2="385" y2="510" stroke="#fae48f" stroke-width="2"/>
+  </g>
+
+  <!-- Radiance Seal -->
+  <circle cx="400" cy="980" r="48" fill="#140a24" stroke="url(#gold)" stroke-width="2"/>
+  <polygon points="400,945 412,972 442,980 412,988 400,1015 388,988 358,980 388,972" fill="url(#gold)"/>
+</svg>

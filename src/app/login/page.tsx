@@ -11,7 +11,6 @@ import {
   User,
   CheckCircle,
   AlertCircle,
-  BookOpen,
   Lock,
 } from "lucide-react";
 import { StarfieldCanvas } from "@/components/ui/StarfieldCanvas";
@@ -23,7 +22,7 @@ function LoginForm() {
   const redirectUrl = searchParams.get("redirect") || "/vault";
   const initialTab = searchParams.get("tab") === "signup" ? "signup" : "signin";
 
-  const [activeTab, setActiveTab] = useState<"signin" | "signup" | "quick">(initialTab);
+  const [activeTab, setActiveTab] = useState<"signin" | "signup">(initialTab);
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string; display_name: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -45,29 +44,6 @@ function LoginForm() {
       })
       .catch(() => {});
   }, []);
-
-  const handleQuickLogin = async (userId: string, name: string) => {
-    setLoading(true);
-    setErrorMsg(null);
-    setSuccessMsg(null);
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to sign in");
-      setSuccessMsg(`Welcome, ${name}! Entering the World Vault...`);
-      setTimeout(() => {
-        router.push(redirectUrl);
-        router.refresh();
-      }, 500);
-    } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : "Authentication failed");
-      setLoading(false);
-    }
-  };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,7 +213,7 @@ function LoginForm() {
           )}
 
           {/* Tab Selector */}
-          <div className="grid grid-cols-3 gap-1 p-1 rounded-xl border border-[#1b2347] bg-[#050819] mb-6 text-xs font-mono">
+          <div className="grid grid-cols-2 gap-1 p-1 rounded-xl border border-[#1b2347] bg-[#050819] mb-6 text-xs font-mono">
             <button
               type="button"
               onClick={() => setActiveTab("signin")}
@@ -259,17 +235,6 @@ function LoginForm() {
               }`}
             >
               Register
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("quick")}
-              className={`py-2 rounded-lg transition-all cursor-pointer ${
-                activeTab === "quick"
-                  ? "bg-[#141b38] border border-[#d4af37]/40 text-[#fae48f] font-semibold shadow"
-                  : "text-[#8885a5] hover:text-white"
-              }`}
-            >
-              Dev Switch
             </button>
           </div>
 
@@ -394,82 +359,6 @@ function LoginForm() {
                 <UserPlus className="w-4 h-4" />
               </button>
             </form>
-          )}
-
-          {/* Tab 3: Quick Dev Switcher */}
-          {activeTab === "quick" && (
-            <div className="space-y-3">
-              <p className="text-xs font-mono text-[#8a88ab] mb-2">
-                Development persona shortcuts for testing isolated states:
-              </p>
-
-              {/* Profile 1: High Scribe */}
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => handleQuickLogin("usr-archivist-prime", "High Scribe")}
-                className="w-full text-left p-3.5 rounded-xl border border-[#232d57] bg-[#090e24] hover:border-[#fae48f] hover:bg-[#0f1638] transition-all group cursor-pointer flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#141b38] border border-[#d4af37]/40 text-[#fae48f] flex items-center justify-center font-cinzel font-bold">
-                    H
-                  </div>
-                  <div>
-                    <div className="font-cinzel text-sm font-bold text-[#faf8f2] group-hover:text-[#fae48f]">
-                      High Scribe
-                    </div>
-                    <div className="text-[10px] font-mono text-[#7e7c9e]">
-                      Existing User • Personal universe
-                    </div>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#797699] group-hover:text-[#fae48f] group-hover:translate-x-1 transition-all" />
-              </button>
-
-              {/* Profile 2: Novice Chronicler (Empty Neo-Story Workspace) */}
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => handleQuickLogin("usr-novice-chronicler", "Novice Chronicler")}
-                className="w-full text-left p-3.5 rounded-xl border border-[#232d57] bg-[#090e24] hover:border-[#fae48f] hover:bg-[#0f1638] transition-all group cursor-pointer flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#162136] border border-cyan-500/40 text-cyan-300 flex items-center justify-center font-cinzel font-bold">
-                    N
-                  </div>
-                  <div>
-                    <div className="font-cinzel text-sm font-bold text-[#faf8f2] group-hover:text-[#fae48f]">
-                      Novice Chronicler
-                    </div>
-                    <div className="text-[10px] font-mono text-[#7e7c9e]">
-                      Clean Persona • 0 personal universes (Pristine empty vault)
-                    </div>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#797699] group-hover:text-[#fae48f] group-hover:translate-x-1 transition-all" />
-              </button>
-
-              {/* Profile 3: Demo Canon Direct Access */}
-              <Link
-                href="/vault/univ-demo-aethelgard"
-                className="w-full text-left p-3.5 rounded-xl border border-[#d4af37]/25 bg-[#121008]/40 hover:border-[#fae48f] transition-all group cursor-pointer flex items-center justify-between block"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#1e1b0d] border border-[#d4af37]/50 text-[#fae48f] flex items-center justify-center">
-                    <BookOpen className="w-4 h-4 text-[#fae48f]" />
-                  </div>
-                  <div>
-                    <div className="font-cinzel text-sm font-bold text-[#fae48f]">
-                      Chronicles of Aethelgard
-                    </div>
-                    <div className="text-[10px] font-mono text-[#a39f88]">
-                      Exemplar Demo Book • Read-only canon & full Oracle
-                    </div>
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-[#d4af37] group-hover:translate-x-1 transition-all" />
-              </Link>
-            </div>
           )}
 
           {/* Footer note */}

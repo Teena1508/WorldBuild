@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050308"/>
+      <stop offset="40%" stop-color="#140612"/>
+      <stop offset="70%" stop-color="#0b0816"/>
+      <stop offset="100%" stop-color="#020105"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fae48f"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#8c6d1f"/>
+    </linearGradient>
+    <radialGradient id="portal" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fae48f" stop-opacity="0.35"/>
+      <stop offset="40%" stop-color="#a62657" stop-opacity="0.25"/>
+      <stop offset="80%" stop-color="#2c0d29" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="800" height="1200" fill="url(#bg)"/>
+  <circle cx="400" cy="520" r="380" fill="url(#portal)"/>
+
+  <!-- Ornate Borders -->
+  <rect x="40" y="40" width="720" height="1120" fill="none" stroke="url(#gold)" stroke-width="2"/>
+  <rect x="52" y="52" width="696" height="1096" fill="none" stroke="#d4af37" stroke-width="0.75" opacity="0.6"/>
+
+  <!-- Corner Filigree -->
+  <g stroke="url(#gold)" stroke-width="2" fill="none">
+    <path d="M 40 100 L 100 100 L 100 40"/>
+    <path d="M 760 100 L 700 100 L 700 40"/>
+    <path d="M 40 1100 L 100 1100 L 100 1160"/>
+    <path d="M 760 1100 L 700 1100 L 700 1160"/>
+  </g>
+
+  <!-- Giant Abyssal Megalith Pillars -->
+  <g fill="#080309" stroke="url(#gold)" stroke-width="2">
+    <!-- Left Monolith Pillar -->
+    <polygon points="180,820 220,340 270,320 280,820"/>
+    <!-- Right Monolith Pillar -->
+    <polygon points="620,820 580,340 530,320 520,820"/>
+    <!-- Grand Arch Lintel -->
+    <polygon points="210,340 270,300 530,300 590,340 550,370 250,370"/>
+  </g>
+
+  <!-- Concentric Portal Horizons -->
+  <g stroke="url(#gold)" stroke-width="1.2" fill="none" opacity="0.5">
+    <ellipse cx="400" cy="540" rx="180" ry="240"/>
+    <ellipse cx="400" cy="540" rx="140" ry="190" stroke-dasharray="6 4"/>
+    <ellipse cx="400" cy="540" rx="90" ry="130"/>
+    <ellipse cx="400" cy="540" rx="40" ry="60" stroke-dasharray="2 3"/>
+  </g>
+
+  <!-- Floating Eye / Gateway Crystal -->
+  <polygon points="400,480 435,535 400,590 365,535" fill="#140612" stroke="url(#gold)" stroke-width="2"/>
+  <circle cx="400" cy="535" r="14" fill="url(#gold)"/>
+
+  <!-- Stele Steps at Base -->
+  <g stroke="url(#gold)" stroke-width="1.5" fill="#040206">
+    <rect x="140" y="820" width="520" height="25"/>
+    <rect x="170" y="845" width="460" height="25"/>
+    <rect x="200" y="870" width="400" height="25"/>
+  </g>
+
+  <!-- Seal -->
+  <circle cx="400" cy="990" r="42" fill="#100512" stroke="url(#gold)" stroke-width="2"/>
+  <polygon points="400,960 408,982 430,990 408,998 400,1020 392,998 370,990 392,982" fill="url(#gold)"/>
+</svg>

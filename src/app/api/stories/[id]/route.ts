@@ -96,15 +96,18 @@ export async function PUT(request: Request, { params }: RouteParams) {
     const seriesId = body.series_id !== undefined ? body.series_id : existing.series_id;
     const seriesOrder = body.series_order !== undefined ? body.series_order : existing.series_order;
     const authorNotes = body.author_notes !== undefined ? body.author_notes : existing.author_notes;
+    const slug = body.slug !== undefined ? (body.slug || '').trim().toLowerCase() || null : existing.slug;
+    const genres = body.genres !== undefined ? (body.genres || '').trim() : existing.genres || '';
+    const tags = body.tags !== undefined ? (body.tags || '').trim() : existing.tags || '';
     const universeIds: string[] | undefined = Array.isArray(body.universe_ids) ? body.universe_ids : undefined;
 
     const updatedStory = await transaction(async (client) => {
       const res = await client.query<Story>(
         `UPDATE stories
-         SET title = $1, description = $2, cover_url = $3, series_id = $4, series_order = $5, author_notes = $6, updated_at = NOW()
-         WHERE id = $7
+         SET title = $1, description = $2, cover_url = $3, series_id = $4, series_order = $5, author_notes = $6, slug = $7, genres = $8, tags = $9, updated_at = NOW()
+         WHERE id = $10
          RETURNING *`,
-        [title, description, coverUrl, seriesId, seriesOrder, authorNotes, id]
+        [title, description, coverUrl, seriesId, seriesOrder, authorNotes, slug, genres, tags, id]
       );
 
       if (universeIds !== undefined) {

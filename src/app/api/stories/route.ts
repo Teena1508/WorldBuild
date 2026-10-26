@@ -86,6 +86,9 @@ export async function POST(request: Request) {
     const seriesId = body.series_id || null;
     const seriesOrder = typeof body.series_order === 'number' ? body.series_order : null;
     const authorNotes = (body.author_notes || '').trim();
+    const slug = (body.slug || '').trim().toLowerCase() || null;
+    const genres = (body.genres || '').trim();
+    const tags = (body.tags || '').trim();
     const universeIds: string[] = Array.isArray(body.universe_ids) ? body.universe_ids : [];
 
     const storyId = `story-${crypto.randomUUID()}`;
@@ -93,10 +96,10 @@ export async function POST(request: Request) {
     const createdStory = await transaction(async (client) => {
       // 1. Insert story
       const res = await client.query<Story>(
-        `INSERT INTO stories (id, user_id, series_id, series_order, title, description, cover_url, author_notes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        `INSERT INTO stories (id, user_id, series_id, series_order, title, slug, description, cover_url, genres, tags, author_notes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
          RETURNING *`,
-        [storyId, user.id, seriesId, seriesOrder, title, description, coverUrl, authorNotes]
+        [storyId, user.id, seriesId, seriesOrder, title, slug, description, coverUrl, genres, tags, authorNotes]
       );
 
       // 2. Insert universe associations

@@ -23,23 +23,28 @@ import {
 } from "lucide-react";
 import { Universe } from "@/lib/db/types";
 import { StarfieldCanvas } from "@/components/ui/StarfieldCanvas";
+import { BookCover } from "@/components/ui/BookCover";
 
 const COVER_PRESETS = [
   {
     name: "Starlight Citadel",
-    url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80",
+    url: "/covers/citadel.svg",
   },
   {
     name: "Occult Scriptorium",
-    url: "https://images.unsplash.com/photo-1507842229451-7f01be7f70d3?auto=format&fit=crop&w=1200&q=80",
+    url: "/covers/scriptorium.svg",
   },
   {
     name: "Cosmic Nebula",
-    url: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80",
+    url: "/covers/nebula.svg",
   },
   {
     name: "Abyssal Gate",
-    url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80",
+    url: "/covers/gate.svg",
+  },
+  {
+    name: "Obsidian Astrolabe",
+    url: "/covers/astrolabe.svg",
   },
 ];
 
@@ -532,20 +537,14 @@ export default function WorldVaultPage() {
               >
                 {/* Cover Image */}
                 <div className="relative h-44 w-full bg-[#0d122b] overflow-hidden border-b border-[#1b223d]">
-                  {univ.cover_url ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={univ.cover_url}
-                      alt={univ.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80 group-hover:opacity-100"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#12183c] via-[#090d24] to-[#04060f]">
-                      <Compass className="w-12 h-12 text-[#d4af37]/30" />
-                    </div>
-                  )}
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#080c21] via-transparent to-black/30" />
+                  <BookCover
+                    src={univ.cover_url}
+                    alt={univ.title}
+                    title={univ.title}
+                    aspect="landscape"
+                    className="h-44"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#080c21] via-transparent to-black/30 pointer-events-none" />
 
                   {/* Top Badges */}
                   <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none">

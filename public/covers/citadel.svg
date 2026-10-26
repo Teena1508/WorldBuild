@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#050816"/>
+      <stop offset="40%" stop-color="#0a102e"/>
+      <stop offset="70%" stop-color="#070a1c"/>
+      <stop offset="100%" stop-color="#03040a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fae48f"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#8c6d1f"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#fae48f" stop-opacity="0.35"/>
+      <stop offset="50%" stop-color="#2a3f85" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="2"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="1200" fill="url(#bg)"/>
+  <circle cx="400" cy="450" r="350" fill="url(#glow)"/>
+
+  <!-- Celestial Constellation Grid -->
+  <g stroke="#d4af37" stroke-width="0.75" opacity="0.3" fill="none">
+    <circle cx="400" cy="450" r="300"/>
+    <circle cx="400" cy="450" r="220" stroke-dasharray="4 6"/>
+    <circle cx="400" cy="450" r="140"/>
+    <circle cx="400" cy="450" r="60"/>
+    <line x1="100" y1="450" x2="700" y2="450"/>
+    <line x1="400" y1="150" x2="400" y2="750"/>
+    <line x1="188" y1="238" x2="612" y2="662" stroke-dasharray="2 4"/>
+    <line x1="188" y1="662" x2="612" y2="238" stroke-dasharray="2 4"/>
+  </g>
+
+  <!-- Star Points -->
+  <g fill="#fae48f">
+    <circle cx="400" cy="150" r="3"/>
+    <circle cx="400" cy="750" r="3"/>
+    <circle cx="100" cy="450" r="3"/>
+    <circle cx="700" cy="450" r="3"/>
+    <circle cx="250" cy="300" r="2.5"/>
+    <circle cx="550" cy="300" r="2.5"/>
+    <circle cx="400" cy="310" r="4" filter="url(#blur)"/>
+    <circle cx="320" cy="220" r="2"/>
+    <circle cx="480" cy="220" r="2"/>
+    <circle cx="300" cy="550" r="2.5"/>
+    <circle cx="500" cy="550" r="2.5"/>
+  </g>
+
+  <!-- Citadel Silhouette & Tower Spires -->
+  <g fill="#070b1a" stroke="url(#gold)" stroke-width="1.5">
+    <!-- Center Grand Tower -->
+    <path d="M 380 650 L 380 320 L 400 240 L 420 320 L 420 650 Z"/>
+    <polygon points="390,320 400,280 410,320" fill="url(#gold)" opacity="0.6"/>
+    <!-- Left Spire -->
+    <path d="M 280 650 L 280 420 L 300 360 L 320 420 L 320 650 Z"/>
+    <!-- Right Spire -->
+    <path d="M 480 650 L 480 420 L 500 360 L 520 420 L 520 650 Z"/>
+    <!-- Flanking Outer Minarets -->
+    <path d="M 200 650 L 200 500 L 215 450 L 230 500 L 230 650 Z"/>
+    <path d="M 570 650 L 570 500 L 585 450 L 600 500 L 600 650 Z"/>
+    <!-- Base Foundation -->
+    <rect x="150" y="650" width="500" height="280" fill="#050814" stroke="url(#gold)" stroke-width="1.5"/>
+  </g>
+
+  <!-- Great Leyline Arch -->
+  <path d="M 220 850 A 180 180 0 0 1 580 850 Z" fill="#03040a" stroke="url(#gold)" stroke-width="2"/>
+  <circle cx="400" cy="740" r="40" fill="none" stroke="url(#gold)" stroke-width="1.5" stroke-dasharray="3 3"/>
+
+  <!-- Ornate Frame Borders -->
+  <rect x="40" y="40" width="720" height="1120" fill="none" stroke="url(#gold)" stroke-width="2"/>
+  <rect x="52" y="52" width="696" height="1096" fill="none" stroke="#d4af37" stroke-width="0.75" opacity="0.6"/>
+
+  <!-- Corner Filigree -->
+  <g stroke="url(#gold)" stroke-width="2" fill="none">
+    <path d="M 40 100 L 100 100 L 100 40"/>
+    <path d="M 760 100 L 700 100 L 700 40"/>
+    <path d="M 40 1100 L 100 1100 L 100 1160"/>
+    <path d="M 760 1100 L 700 1100 L 700 1160"/>
+  </g>
+
+  <!-- Emblem Crest -->
+  <circle cx="400" cy="1000" r="42" fill="#0a102c" stroke="url(#gold)" stroke-width="2"/>
+  <polygon points="400,970 410,995 435,1000 410,1005 400,1030 390,1005 365,1000 390,995" fill="url(#gold)"/>
+</svg>

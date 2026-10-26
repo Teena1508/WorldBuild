@@ -76,7 +76,7 @@ export async function ensureDefaultUniverses(): Promise<void> {
         SYSTEM_USER_ID,
         'Aethelgard: The Astral Shards',
         'A fractured celestial sphere held together by ancient golden leylines and dying starfire.',
-        'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80',
+        '/covers/citadel.svg',
       ]
     );
 
